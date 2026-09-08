@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Делим поровну — что менять: сумму или число людей</title>
+<meta name="description" content="Калькулятор-развилка: общая сумма делится поровну. Хотите, чтобы каждому досталось другое число — выберите, что менять: сумму или число людей. CC0, iohan-мастерская.">
+<style>
+  :root{
+    --paper:#f6f4ef;
+    --ink:#1c1a17;
+    --muted:#6b665e;
+    --card:#ffffff;
+    --line:#e4ded2;
+    --teal:#1f6f5c;      /* way 1: change number of people */
+    --teal-bg:#eaf3f0;
+    --slate:#3a5a8c;     /* way 2: change the sum */
+    --slate-bg:#eaf0f8;
+    --ochre:#9a5b1e;     /* cost / price */
+    --err:#a03425;
+    --tok:#c9c2b4;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font:16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:720px; margin:0 auto; padding:28px 18px 64px}
+  h1{
+    font:800 26px/1.25 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing:-.01em; margin:0 0 6px;
+  }
+  .lede{
+    font:400 17px/1.5 Georgia, "Times New Roman", serif;
+    color:var(--muted); margin:0 0 22px; max-width:56ch;
+  }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:18px 18px 20px; margin:0 0 16px;
+  }
+  .kicker{
+    font:700 12px/1 ui-sans-serif, system-ui, sans-serif; letter-spacing:.04em;
+    color:var(--muted); text-transform:none; margin:0 0 10px;
+  }
+  .scene-line{
+    font:400 19px/1.4 Georgia, "Times New Roman", serif; margin:0 0 14px;
+  }
+  .scene-line b{font-weight:700}
+  .rel{
+    font:600 15px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-variant-numeric:tabular-nums; color:var(--teal);
+    background:var(--teal-bg); border:1px solid #cfe4dc; border-radius:7px;
+    display:inline-block; padding:6px 10px; margin:0 0 4px;
+  }
+  /* token pool */
+  .pool{display:flex; flex-wrap:wrap; gap:10px; margin:14px 0 4px}
+  .pile{
+    display:flex; flex-wrap:wrap; gap:3px; align-content:flex-start;
+    border:1px solid var(--line); border-radius:8px; padding:8px;
+    background:#fbfaf7; max-width:100%;
+  }
+  .tok{
+    width:11px; height:11px; border-radius:3px; background:var(--tok); display:inline-block;
+  }
+  .pile-lbl{
+    font:700 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric:tabular-nums; color:var(--muted);
+    align-self:center; padding-left:4px;
+  }
+  /* goal */
+  .goal-row{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-top:6px}
+  .goal-row label{font:600 15px/1.4 ui-sans-serif, system-ui, sans-serif}
+  input[type=text]{
+    font:700 18px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric:tabular-nums;
+    width:120px; padding:10px 12px; border:1px solid var(--line); border-radius:8px;
+    background:#fff; color:var(--ink);
+  }
+  input[type=text]:focus{outline:2px solid var(--teal); outline-offset:1px}
+  button{
+    font:700 15px/1.2 ui-sans-serif, system-ui, sans-serif;
+    border:1px solid var(--ink); background:var(--ink); color:#fff;
+    padding:10px 16px; border-radius:8px; cursor:pointer;
+  }
+  button:focus{outline:2px solid var(--ink); outline-offset:2px}
+  button.ghost{background:#fff; color:var(--ink); border-color:var(--line)}
+  button:disabled{opacity:.45; cursor:not-allowed}
+  .err{
+    font:600 14px/1.4 ui-sans-serif, system-ui, sans-serif; color:var(--err);
+    margin:10px 0 0; min-height:1.2em;
+  }
+  /* the two ways */
+  .fork{margin-top:6px}
+  .worlds{display:grid; gap:14px; margin-top:14px}
+  .way{
+    border:1px solid var(--line); border-radius:10px; padding:16px; background:#fff;
+    border-top:3px solid var(--line);
+  }
+  .way.a{border-top-color:var(--teal)}
+  .way.b{border-top-color:var(--slate)}
+  .way h3{font:700 16px/1.3 ui-sans-serif, system-ui, sans-serif; margin:0 0 6px}
+  .way.a h3{color:var(--teal)} .way.b h3{color:var(--slate)}
+  .way .desc{font:400 15px/1.5 Georgia, "Times New Roman", serif; margin:0 0 10px; color:var(--ink)}
+  .way .mini{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 10px}
+  .way .mini .pile{padding:6px; gap:2px}
+  .way .mini .tok{width:8px; height:8px; border-radius:2px}
+  .way .mini .pile-lbl{font-size:11px}
+  .cost{
+    font:600 14px/1.4 ui-sans-serif, system-ui, sans-serif; color:var(--ochre); margin:0 0 4px;
+  }
+  .check{
+    font:600 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric:tabular-nums; color:var(--muted); margin:0 0 12px;
+  }
+  .way button{width:100%}
+  .way.a button{background:var(--teal); border-color:var(--teal)}
+  .way.b button{background:var(--slate); border-color:var(--slate)}
+  .fork-actions{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap}
+  /* history */
+  .hist h3{font:700 14px/1.3 ui-sans-serif, system-ui, sans-serif; margin:0 0 8px; color:var(--muted)}
+  .hist ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+  .hist li{
+    font:500 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric:tabular-nums;
+    background:#fbfaf7; border:1px solid var(--line); border-radius:7px;
+    padding:8px 10px; cursor:pointer;
+  }
+  .hist li:hover{background:#f3efe6}
+  .hist .empty{font:400 14px/1.4 ui-sans-serif, system-ui, sans-serif; color:var(--muted); padding:6px 2px}
+  .foot{
+    font:400 13px/1.5 ui-sans-serif, system-ui, sans-serif; color:var(--muted);
+    margin-top:26px; border-top:1px solid var(--line); padding-top:14px;
+  }
+  /* gesture: settle animation on apply */
+  @keyframes settle{from{opacity:.25; transform:translateY(4px) scale(.985)} to{opacity:1; transform:none}}
+  .settle{animation:settle .38s ease}
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important; transition:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Делим поровну — что менять: сумму или число людей</h1>
+  <p class="lede">Общая сумма делится поровну. Хотите, чтобы каждому досталось другое число — не вводите формулу. Выберите, <b>что</b> менять: саму сумму или число людей. Оба пути видны до выбора.</p>
+
+  <!-- current scene -->
+  <section class="card" aria-label="Текущая сцена">
+    <p class="kicker">Сейчас</p>
+    <p class="scene-line">Сумма <b id="curPool">84</b> делят <b id="curRecip">3</b> человека — по <b id="curEach">28</b> каждому.</p>
+    <span class="rel" id="curRel">3 × 28 = 84</span>
+    <div class="pool" id="curPoolTok" aria-hidden="true"></div>
+  </section>
+
+  <!-- goal / first action -->
+  <section class="card" aria-label="Ваша цель">
+    <p class="kicker">Ваша цель</p>
+    <p class="scene-line">Хотите, чтобы каждому досталось <b id="goalEcho">21</b>?</p>
+    <div class="goal-row">
+      <label for="target">каждому:</label>
+      <input type="text" id="target" value="21" inputmode="numeric" autocomplete="off" aria-describedby="targetErr">
+      <button id="apply">Показать два способа</button>
+    </div>
+    <p class="err" id="targetErr" role="alert"></p>
+  </section>
+
+  <!-- the two ways (hidden until shown) -->
+  <section class="card fork" id="fork" hidden aria-label="Два способа">
+    <p class="kicker">Два способа получить по <span id="forkTarget">21</span></p>
+    <div class="worlds">
+      <div class="way a" id="wayA">
+        <h3>Оставить сумму, поменять число людей</h3>
+        <p class="desc" id="wayADesc"></p>
+        <div class="mini" id="wayAPool" aria-hidden="true"></div>
+        <p class="cost" id="wayACost"></p>
+        <p class="check" id="wayARel"></p>
+        <button id="pickA">Взять этот способ</button>
+      </div>
+      <div class="way b" id="wayB">
+        <h3>Оставить число людей, поменять сумму</h3>
+        <p class="desc" id="wayBDesc"></p>
+        <div class="mini" id="wayBPool" aria-hidden="true"></div>
+        <p class="cost" id="wayBCost"></p>
+        <p class="check" id="wayBRel"></p>
+        <button id="pickB">Взять этот способ</button>
+      </div>
+    </div>
+    <div class="fork-actions">
+      <button class="ghost" id="cancel">Отмена — вернуть исходную сцену</button>
+    </div>
+  </section>
+
+  <!-- history + real undo -->
+  <section class="card hist" aria-label="История сцен">
+    <div class="fork-actions" style="margin:0 0 12px">
+      <button class="ghost" id="undo" disabled>Отменить последний шаг</button>
+    </div>
+    <h3>История (нажмите, чтобы вернуть сцену)</h3>
+    <ul id="historyList"></ul>
+  </section>
+
+  <p class="foot">
+    Калькулятор «А если наоборот?» — v2, браузерная мастерская Иогана (тред <code>6e31ab8c</code>).
+    Vanilla JS, без сети и внешних зависимостей, локальные вычисления. Лицензия CC0.
+    Фиксированная версия — в репозитории <code>daedalus-agent-lab/iohan-calculator</code> (commit SHA в треде).
+  </p>
+</div>
+<script>
+(function(){
+  "use strict";
+  var BASE = { pool: 84, recipients: 3 };
+  var state = { pool: BASE.pool, recipients: BASE.recipients, history: [] }; // history: stack of {pool,recipients}
+  var displayed = null; // snapshot of the currently shown fork
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  function eachOf(pool, recipients){ return pool / recipients; }
+
+  function renderPool(container, pool, recipients, each){
+    container.innerHTML = "";
+    var even = Number.isInteger(each) && each > 0 && pool === each * recipients;
+    if (even){
+      for (var i = 0; i < recipients; i++){
+        var pile = document.createElement("div"); pile.className = "pile";
+        for (var j = 0; j < each; j++){ var t = document.createElement("span"); t.className = "tok"; pile.appendChild(t); }
+        var lbl = document.createElement("span"); lbl.className = "pile-lbl"; lbl.textContent = each; pile.appendChild(lbl);
+        container.appendChild(pile);
+      }
+    } else {
+      var p = document.createElement("div"); p.className = "pile";
+      for (var k = 0; k < pool; k++){ var s = document.createElement("span"); s.className = "tok"; p.appendChild(s); }
+      container.appendChild(p);
+    }
+  }
+
+  function renderScene(){
+    var each = eachOf(state.pool, state.recipients);
+    $("curPool").textContent = state.pool;
+    $("curRecip").textContent = state.recipients;
+    $("curEach").textContent = Number.isInteger(each) ? each : each.toFixed(2);
+    $("curRel").textContent = state.recipients + " × " + (Number.isInteger(each) ? each : each.toFixed(2)) + " = " + state.pool;
+    renderPool($("curPoolTok"), state.pool, state.recipients, each);
+  }
+
+  function renderHistory(){
+    var list = $("historyList");
+    list.innerHTML = "";
+    if (state.history.length === 0){
+      var e = document.createElement("li"); e.className = "empty"; e.textContent = "Пока пусто — история появится после первого выбора.";
+      list.appendChild(e);
+    } else {
+      for (var i = state.history.length - 1; i >= 0; i--){
+        var h = state.history[i];
+        var li = document.createElement("li");
+        li.textContent = (state.history.length - 1 - i) + ".  " + h.recipients + " × " + eachOf(h.pool, h.recipients) + " = " + h.pool;
+        (function(idx){ li.addEventListener("click", function(){ restoreTo(idx); }); })(i);
+        list.appendChild(li);
+      }
+    }
+    $("undo").disabled = state.history.length === 0;
+  }
+
+  function settle(el){
+    el.classList.remove("settle");
+    void el.offsetWidth; // reflow to restart animation
+    el.classList.add("settle");
+  }
+
+  // strict integer validation (bug 2)
+  function validateTarget(raw){
+    raw = (raw || "").trim();
+    if (raw === "") return { ok:false, error:"Введите целое число больше 0." };
+    if (!/^[0-9]+$/.test(raw)) return { ok:false, error:"Только целые числа (без дробей, знаков и степеней)." };
+    var n = Number(raw);
+    if (!Number.isSafeInteger(n)) return { ok:false, error:"Число слишком большое." };
+    if (n <= 0) return { ok:false, error:"Число должно быть больше 0." };
+    return { ok:true, value:n };
+  }
+
+  // compute the two ways from the CURRENT scene (bug 4: all text derived from scene)
+  function computeWays(target){
+    var pool = state.pool, recipients = state.recipients;
+    var aRecip = pool / target;
+    var aValid = Number.isInteger(aRecip) && aRecip > 0;
+    var bPool = target * recipients;
+    var bValid = Number.isInteger(bPool) && bPool > 0;
+
+    function deltaWord(diff, noun){
+      if (diff > 0) return "увеличить на " + diff + " " + noun;
+      if (diff < 0) return "уменьшить на " + Math.abs(diff) + " " + noun;
+      return "без изменений";
+    }
+
+    var wayA = {
+      valid: aValid,
+      recipients: aRecip,
+      each: target,
+      pool: pool,
+      title: "Оставить сумму, поменять число людей",
+      desc: aValid
+        ? ("Сумма " + pool + " остаётся. Число людей: " + deltaWord(aRecip - recipients, "чел.") + " — с " + recipients + " до " + aRecip + ".")
+        : ("Сумма " + pool + " не делится на " + target + " нацело — " + target + " каждому требует " + aRecip + " человек, а человек должно быть целым."),
+      cost: aValid ? ("Цена: " + (aRecip > recipients ? "+" + (aRecip - recipients) + " человек" : aRecip < recipients ? "−" + (recipients - aRecip) + " человек" : "без изменений")) : "Недоступно",
+      rel: aValid ? (aRecip + " × " + target + " = " + pool) : "—"
+    };
+    var wayB = {
+      valid: bValid,
+      pool: bPool,
+      recipients: recipients,
+      each: target,
+      title: "Оставить число людей, поменять сумму",
+      desc: bValid
+        ? ("Число людей " + recipients + " остаётся. Сумма: " + deltaWord(bPool - pool, "ед.") + " — с " + pool + " до " + bPool + ".")
+        : ("Недоступно."),
+      cost: bValid ? ("Цена: " + (bPool > pool ? "+" + (bPool - pool) + " ед. к сумме" : bPool < pool ? "−" + (pool - bPool) + " ед. к сумме" : "без изменений")) : "Недоступно",
+      rel: bValid ? (recipients + " × " + target + " = " + bPool) : "—"
+    };
+    return { target: target, a: wayA, b: wayB };
+  }
+
+  function renderFork(w){
+    $("forkTarget").textContent = w.target;
+    // way A
+    $("wayADesc").textContent = w.a.desc;
+    $("wayACost").textContent = w.a.cost;
+    $("wayARel").textContent = w.a.rel;
+    renderPool($("wayAPool"), w.a.pool, w.a.recipients, w.a.each);
+    $("pickA").disabled = !w.a.valid;
+    // way B
+    $("wayBDesc").textContent = w.b.desc;
+    $("wayBCost").textContent = w.b.cost;
+    $("wayBRel").textContent = w.b.rel;
+    renderPool($("wayBPool"), w.b.pool, w.b.recipients, w.b.each);
+    $("pickB").disabled = !w.b.valid;
+    $("fork").hidden = false;
+  }
+
+  function hideFork(){ $("fork").hidden = true; displayed = null; }
+
+  function showFork(){
+    var v = validateTarget($("target").value);
+    $("targetErr").textContent = v.ok ? "" : v.error;
+    if (!v.ok){ hideFork(); return; }
+    $("goalEcho").textContent = v.value;
+    displayed = computeWays(v.value);
+    renderFork(displayed);
+  }
+
+  // bug 1 fix: pick applies the SNAPSHOT (displayed), never recomputes;
+  // and editing the target invalidates the fork so a stale card can't be picked.
+  function pick(way){
+    if (!displayed) return;
+    state.history.push({ pool: state.pool, recipients: state.recipients });
+    if (way === "a"){ state.pool = displayed.a.pool; state.recipients = displayed.a.recipients; }
+    else { state.pool = displayed.b.pool; state.recipients = displayed.b.recipients; }
+    hideFork();
+    renderScene(); renderHistory();
+    settle($("curPoolTok"));
+  }
+
+  function undo(){
+    if (state.history.length === 0) return;
+    var last = state.history.pop();
+    state.pool = last.pool; state.recipients = last.recipients;
+    hideFork();
+    renderScene(); renderHistory();
+    settle($("curPoolTok"));
+  }
+
+  function restoreTo(idx){
+    // keep entries 0..idx as the new history, restore entry idx as current
+    var entry = state.history[idx];
+    state.history = state.history.slice(0, idx);
+    state.pool = entry.pool; state.recipients = entry.recipients;
+    hideFork();
+    renderScene(); renderHistory();
+    settle($("curPoolTok"));
+  }
+
+  $("apply").addEventListener("click", showFork);
+  $("pickA").addEventListener("click", function(){ pick("a"); });
+  $("pickB").addEventListener("click", function(){ pick("b"); });
+  $("cancel").addEventListener("click", hideFork);
+  $("undo").addEventListener("click", undo);
+  $("target").addEventListener("keydown", function(e){ if (e.key === "Enter") showFork(); });
+  $("target").addEventListener("input", function(){
+    $("targetErr").textContent = "";
+    if (!$("fork").hidden) hideFork(); // invalidate stale fork on edit
+  });
+
+  renderScene(); renderHistory();
+})();
+</script>
+</body>
+</html>
