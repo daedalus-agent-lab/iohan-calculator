@@ -30,9 +30,9 @@ function makeEl(id) {
   });
   return el;
 }
-const IDS = ['curPool','curRecip','curEach','curRel','curPoolTok','target','apply','fork','forkTarget',
-  'wayA','wayADesc','wayAPool','wayACost','wayARel','pickA',
-  'wayB','wayBDesc','wayBPool','wayBCost','wayBRel','pickB',
+const IDS = ['curPool','curRecip','curEach','curRel','curPoolTok','target','apply','fork','forkTarget','forkKicker',
+  'wayA','wayATitle','wayADesc','wayAPool','wayACost','wayARel','pickA',
+  'wayB','wayBTitle','wayBDesc','wayBPool','wayBCost','wayBRel','pickB',
   'cancel','undo','historyList','goalEcho','targetErr',
   'ownPool','ownRecip','setScene','sceneErr','addPerson','remPerson'];
 
@@ -178,12 +178,57 @@ assert(e.historyList.children.length === 1, 'own scene pushed previous onto hist
 click(e, 'undo');
 assert(scene(e) === '84/3/28', 'undo after own scene restores demo 84/3/28');
 
-// ---- Direct action: +one person previews keep-share fork (target = current each = 28) ----
+// ---- v5: person-delta contract (iohan review) ----
+// From 100/4, −1 person: BOTH cards must end with 3 people.
+// A: keep sum 100 → each ≈33.33 → NOT integer → unavailable (explicit).
+// B: keep share 25 → sum 75, 3 people.
+e = freshRun();
+e.ownPool.value = '100'; e.ownRecip.value = '4'; click(e, 'setScene');
+click(e, 'remPerson');
+assert(e.fork.hidden === false, 'v5 −person shows fork');
+assert(e.forkKicker.textContent.indexOf('3') !== -1, 'v5 −person kicker names 3 people: ' + e.forkKicker.textContent);
+assert(e.pickA.disabled === true, 'v5 −person wayA unavailable (100/3 not integer): ' + e.wayADesc.textContent);
+assert(e.wayADesc.textContent.indexOf('недоступ') !== -1 || e.wayACost.textContent === 'Недоступно', 'v5 −person wayA explicitly unavailable');
+assert(e.pickB.disabled === false, 'v5 −person wayB available');
+assert(e.wayBRel.textContent === '3 × 25 = 75', 'v5 −person wayB keep-share 3×25=75: ' + e.wayBRel.textContent);
+click(e, 'pickB');
+assert(scene(e) === '75/3/25', 'v5 −person pickB → 75/3/25 (person left)');
+
+// From 100/4, −1 then pick unavailable A must not mutate.
+e = freshRun();
+e.ownPool.value = '100'; e.ownRecip.value = '4'; click(e, 'setScene');
+click(e, 'remPerson');
+click(e, 'pickA');
+assert(scene(e) === '100/4/25', 'v5 −person pickA (disabled) leaves scene unchanged');
+
+// From 84/3, +1 person: BOTH cards must end with 4 people.
+// A: keep sum 84 → each 21 → 4×21=84.
+// B: keep share 28 → sum 112 → 4×28=112.
 e = freshRun();
 click(e, 'addPerson');
-assert(e.fork.hidden === false, '+person shows fork');
-assert(e.target.value === '21', '+person sets goal to new share 84/4=21: ' + e.target.value);
-assert(e.wayARel.textContent === '4 × 21 = 84', '+person wayA is keep-bill, 4 people: ' + e.wayARel.textContent);
-assert(e.wayBRel.textContent === '3 × 21 = 63', '+person wayB is keep-people, shrink bill: ' + e.wayBRel.textContent);
+assert(e.fork.hidden === false, 'v5 +person shows fork');
+assert(e.forkKicker.textContent.indexOf('4') !== -1, 'v5 +person kicker names 4 people: ' + e.forkKicker.textContent);
+assert(e.wayARel.textContent === '4 × 21 = 84', 'v5 +person wayA keep-bill 4×21=84: ' + e.wayARel.textContent);
+assert(e.wayBRel.textContent === '4 × 28 = 112', 'v5 +person wayB keep-share 4×28=112: ' + e.wayBRel.textContent);
+assert(e.pickA.disabled === false && e.pickB.disabled === false, 'v5 +person both ways available');
+click(e, 'pickA');
+assert(scene(e) === '84/4/21', 'v5 +person pickA → 84/4/21 (person sat)');
 
-console.log(process.exitCode ? '\nSOME TESTS FAILED' : '\nALL v4 TESTS PASSED');
+e = freshRun();
+click(e, 'addPerson');
+click(e, 'pickB');
+assert(scene(e) === '112/4/28', 'v5 +person pickB → 112/4/28 (person sat, share kept)');
+
+// From 100/3 (non-integer share): scene shows ≈, not false "=".
+e = freshRun();
+e.ownPool.value = '100'; e.ownRecip.value = '3'; click(e, 'setScene');
+assert(e.curRel.textContent.indexOf('≈') !== -1, 'v5 non-integer scene uses ≈: ' + e.curRel.textContent);
+assert(e.curRel.textContent.indexOf('=') === -1, 'v5 non-integer scene must not claim exact =');
+assert(e.curEach.textContent === '33.33', 'v5 non-integer each shown as 33.33');
+// +person with non-integer share: keep-share path unavailable; keep-sum may or may not be integer.
+click(e, 'addPerson');
+assert(e.fork.hidden === false, 'v5 +person from 100/3 shows fork');
+assert(e.pickB.disabled === true, 'v5 +person from non-integer share: keep-share unavailable');
+assert(e.wayBDesc.textContent.indexOf('не целая') !== -1, 'v5 keep-share explains non-integer share: ' + e.wayBDesc.textContent);
+
+console.log(process.exitCode ? '\nSOME TESTS FAILED' : '\nALL v5 TESTS PASSED');

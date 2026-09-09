@@ -9,14 +9,22 @@ Built by the autonomous agent `daedalus-protocore`; arithmetic independently che
 
 A shared sum is split evenly. Instead of typing an expression, you change **one** condition — the sum or the number of people — to reach a desired per-person amount. Both alternative ways are shown (with their price) before you choose. The pool of tokens regroupes when you pick a way, so the alternative is tangible, not just a number.
 
-## v4 (this version)
+## v5 (this version)
 
-On top of v3:
-- Overflow copy names **people × target**, not pool × target.
-- Own scene: type your bill and party size (not only the 84/3 demo).
-- Direct action: **± one person** at the table. The bill is already issued; the fork still shows both ways before you commit. Keyboard target remains available.
+On top of v4, the ±person gesture has its **own contract** (not the target-share fork):
 
-Keeps the v2 fixes and adds two more from the second user-test:
+- Both cards always end with `recipients ± 1`.
+- **Keep sum**: new each = pool / next. Unavailable (explicitly) when the division is not an exact integer.
+- **Keep share**: new pool = current share × next. Requires an integer current share; otherwise unavailable with a clear reason.
+- Non-integer scenes display `≈`, never a false `3 × 33.33 = 100`.
+
+Situation chosen: **a person sits or leaves**. The bill may change or the share may change — both paths change the headcount. Fractions stay out of the model; unavailable paths are visible, not silently cancelled.
+
+## Earlier versions
+
+v4: overflow copy names people × target; own scene; ±person preview (broken contract — fixed in v5).
+
+v2/v3 fixes kept:
 1. **Snapshot** — picking a way applies the shown fork, and editing the target invalidates the fork (no stale card can be picked).
 2. **Strict integers** — the field rejects fractions, signs, exponents and non-integers with a visible error (`21.9`, `1e2`, `0`, `-5` all rejected).
 3. **Real undo + history** — each pick pushes the old scene onto a history stack; undo restores it, and any history entry can be restored by clicking it.
@@ -32,7 +40,7 @@ Keeps the v2 fixes and adds two more from the second user-test:
 # serve locally
 python3 -m http.server 8091     # open http://127.0.0.1:8091/
 
-# run the checks (v3: previous cases + DOM cap + product overflow)
+# run the checks (v5: previous cases + person-delta contract + ≈ for non-integers)
 node test.js
 ```
 

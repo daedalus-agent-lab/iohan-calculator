@@ -166,7 +166,7 @@
       <button class="ghost" id="remPerson">− один человек уходит</button>
       <button class="ghost" id="addPerson">+ один человек садится</button>
     </div>
-    <p class="lede" style="margin:8px 0 0;font-size:14px">Счёт уже выставлен: его нельзя «просто уменьшить». Кнопки показывают оба пути до выбора — оставить сумму или оставить долю.</p>
+    <p class="lede" style="margin:8px 0 0;font-size:14px">Человек садится или уходит — оба варианта меняют число людей. Выберите, что оставить: сумму или долю. Дроби вне модели: недоступный путь виден явно.</p>
   </section>
 
   <!-- goal / first action -->
@@ -183,10 +183,10 @@
 
   <!-- the two ways (hidden until shown) -->
   <section class="card fork" id="fork" hidden aria-label="Два способа">
-    <p class="kicker">Два способа получить по <span id="forkTarget">21</span></p>
+    <p class="kicker" id="forkKicker">Два способа получить по <span id="forkTarget">21</span></p>
     <div class="worlds">
       <div class="way a" id="wayA">
-        <h3>Оставить сумму, поменять число людей</h3>
+        <h3 id="wayATitle">Оставить сумму, поменять число людей</h3>
         <p class="desc" id="wayADesc"></p>
         <div class="mini" id="wayAPool" aria-hidden="true"></div>
         <p class="cost" id="wayACost"></p>
@@ -194,7 +194,7 @@
         <button id="pickA">Взять этот способ</button>
       </div>
       <div class="way b" id="wayB">
-        <h3>Оставить число людей, поменять сумму</h3>
+        <h3 id="wayBTitle">Оставить число людей, поменять сумму</h3>
         <p class="desc" id="wayBDesc"></p>
         <div class="mini" id="wayBPool" aria-hidden="true"></div>
         <p class="cost" id="wayBCost"></p>
@@ -217,7 +217,7 @@
   </section>
 
   <p class="foot">
-    Калькулятор «А если наоборот?» — v4, браузерная мастерская Иогана.
+    Калькулятор «А если наоборот?» — v5, браузерная мастерская Иогана.
     Vanilla JS, без сети и внешних зависимостей, локальные вычисления. Лицензия CC0.
     Фиксированная версия — в репозитории <code>daedalus-agent-lab/iohan-calculator</code> (commit SHA в треде).
   </p>
@@ -232,6 +232,19 @@
   var $ = function(id){ return document.getElementById(id); };
 
   function eachOf(pool, recipients){ return pool / recipients; }
+
+  // Format a share for display. Exact integer stays exact.
+  // Non-integer never claims "=" with a rounded product that does not match the pool.
+  function formatEach(each){
+    return Number.isInteger(each) ? String(each) : each.toFixed(2);
+  }
+  function formatRelation(recipients, each, pool){
+    if (Number.isInteger(each) && pool === each * recipients){
+      return recipients + " × " + each + " = " + pool;
+    }
+    // Honest approximation: show rounded share with ≈, never a false product.
+    return recipients + " × " + formatEach(each) + " ≈ " + pool;
+  }
 
   // Bounded visualization. The token pool is a decorative metaphor (aria-hidden);
   // the exact values live in the text (rel/cost/desc). Cap the DOM so a large
@@ -277,8 +290,8 @@
     var each = eachOf(state.pool, state.recipients);
     $("curPool").textContent = state.pool;
     $("curRecip").textContent = state.recipients;
-    $("curEach").textContent = Number.isInteger(each) ? each : each.toFixed(2);
-    $("curRel").textContent = state.recipients + " × " + (Number.isInteger(each) ? each : each.toFixed(2)) + " = " + state.pool;
+    $("curEach").textContent = formatEach(each);
+    $("curRel").textContent = formatRelation(state.recipients, each, state.pool);
     renderPool($("curPoolTok"), state.pool, state.recipients, each);
   }
 
@@ -292,7 +305,8 @@
       for (var i = state.history.length - 1; i >= 0; i--){
         var h = state.history[i];
         var li = document.createElement("li");
-        li.textContent = (state.history.length - 1 - i) + ".  " + h.recipients + " × " + eachOf(h.pool, h.recipients) + " = " + h.pool;
+        var he = eachOf(h.pool, h.recipients);
+        li.textContent = (state.history.length - 1 - i) + ".  " + formatRelation(h.recipients, he, h.pool);
         (function(idx){ li.addEventListener("click", function(){ restoreTo(idx); }); })(i);
         list.appendChild(li);
       }
@@ -317,7 +331,14 @@
     return { ok:true, value:n };
   }
 
-  // compute the two ways from the CURRENT scene (bug 4: all text derived from scene)
+  function deltaWord(diff, noun){
+    if (diff > 0) return "увеличить на " + diff + " " + noun;
+    if (diff < 0) return "уменьшить на " + Math.abs(diff) + " " + noun;
+    return "без изменений";
+  }
+
+  // Target-share fork: seek a desired per-person amount.
+  // Way A keeps the sum and changes people; way B keeps people and changes the sum.
   function computeWays(target){
     var pool = state.pool, recipients = state.recipients;
     var aRecip = pool / target;
@@ -325,12 +346,6 @@
     var bPool = target * recipients;
     var bOverflow = !Number.isSafeInteger(bPool);
     var bValid = Number.isSafeInteger(bPool) && bPool > 0;
-
-    function deltaWord(diff, noun){
-      if (diff > 0) return "увеличить на " + diff + " " + noun;
-      if (diff < 0) return "уменьшить на " + Math.abs(diff) + " " + noun;
-      return "без изменений";
-    }
 
     var wayA = {
       valid: aValid,
@@ -358,11 +373,78 @@
       cost: bValid ? ("Цена: " + (bPool > pool ? "+" + (bPool - pool) + " ед. к сумме" : bPool < pool ? "−" + (pool - bPool) + " ед. к сумме" : "без изменений")) : "Недоступно",
       rel: bValid ? (recipients + " × " + target + " = " + bPool) : "—"
     };
-    return { target: target, a: wayA, b: wayB };
+    return {
+      mode: "target",
+      kicker: "Два способа получить по " + target,
+      target: target,
+      a: wayA,
+      b: wayB
+    };
+  }
+
+  // Person-delta fork: ALWAYS moves to recipients±1.
+  // Way A: keep the sum, change people (new each = pool / next). Integer-only: unavailable if not exact.
+  // Way B: keep the current share, change the sum (new pool = share * next). Needs integer share.
+  // This is not the same gesture as computeWays(target): both cards must end with next people.
+  function computePersonDelta(delta){
+    var pool = state.pool, recipients = state.recipients;
+    var next = recipients + delta;
+    var share = eachOf(pool, recipients);
+    var verb = delta > 0 ? "садится" : "уходит";
+
+    var aEach = eachOf(pool, next);
+    var aValid = Number.isSafeInteger(aEach) && aEach > 0 && pool === aEach * next;
+
+    var bPool = share * next;
+    var bOverflow = Number.isInteger(share) && !Number.isSafeInteger(bPool);
+    var bValid = Number.isInteger(share) && share > 0 && Number.isSafeInteger(bPool) && bPool > 0;
+
+    var wayA = {
+      valid: aValid,
+      recipients: next,
+      each: aEach,
+      pool: pool,
+      title: "Оставить сумму — " + next + " человек",
+      desc: aValid
+        ? ("Человек " + verb + ". Сумма " + pool + " остаётся. Доля: с " + formatEach(share) + " до " + aEach + " на " + next + " чел.")
+        : ("Человек " + verb + ", но сумма " + pool + " не делится на " + next + " нацело (доля была бы " + formatEach(aEach) + "). Дроби вне модели — путь недоступен."),
+      cost: aValid
+        ? ("Цена: " + (delta > 0 ? "+" : "−") + "1 человек, доля " + aEach)
+        : "Недоступно",
+      rel: aValid ? (next + " × " + aEach + " = " + pool) : "—"
+    };
+    var wayB = {
+      valid: bValid,
+      pool: bPool,
+      recipients: next,
+      each: share,
+      title: "Оставить долю — " + next + " человек",
+      desc: bValid
+        ? ("Человек " + verb + ". Доля " + share + " остаётся. Сумма: " + deltaWord(bPool - pool, "ед.") + " — с " + pool + " до " + bPool + ".")
+        : (bOverflow
+            ? ("Доля " + share + " × " + next + " выходит за пределы точной целочисленной арифметики — отказ до рендера.")
+            : (!Number.isInteger(share)
+                ? ("Текущая доля " + formatEach(share) + " не целая — оставить её нельзя в целочисленной модели.")
+                : "Недоступно.")),
+      cost: bValid
+        ? ("Цена: " + (bPool > pool ? "+" + (bPool - pool) + " ед. к сумме" : bPool < pool ? "−" + (pool - bPool) + " ед. к сумме" : "без изменений") + ", " + next + " чел.")
+        : "Недоступно",
+      rel: bValid ? (next + " × " + share + " = " + bPool) : "—"
+    };
+    return {
+      mode: "person",
+      kicker: "Человек " + verb + " — оба пути дают " + next + " человек",
+      target: null,
+      a: wayA,
+      b: wayB
+    };
   }
 
   function renderFork(w){
-    $("forkTarget").textContent = w.target;
+    $("forkKicker").textContent = w.kicker;
+    $("forkTarget").textContent = w.target == null ? "" : w.target;
+    $("wayATitle").textContent = w.a.title;
+    $("wayBTitle").textContent = w.b.title;
     // way A
     $("wayADesc").textContent = w.a.desc;
     $("wayACost").textContent = w.a.cost;
@@ -453,18 +535,8 @@
       return;
     }
     $("sceneErr").textContent = "";
-    var newEach = eachOf(state.pool, next);
-    if (Number.isInteger(newEach) && newEach > 0){
-      $("target").value = String(newEach);
-    } else {
-      var keepShare = eachOf(state.pool, state.recipients);
-      if (!Number.isInteger(keepShare) || keepShare <= 0){
-        $("sceneErr").textContent = "Текущая доля не целая — задайте цель с клавиатуры.";
-        return;
-      }
-      $("target").value = String(keepShare);
-    }
-    showFork();
+    displayed = computePersonDelta(delta);
+    renderFork(displayed);
   }
 
   $("setScene").addEventListener("click", setOwnScene);
