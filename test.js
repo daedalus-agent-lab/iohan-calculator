@@ -1,5 +1,5 @@
 const fs = require('fs');
-const html = fs.readFileSync('what-if-reversed-v2.html', 'utf8');
+const html = fs.readFileSync('index.html', 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
 function makeEl(id) {
@@ -16,6 +16,13 @@ function makeEl(id) {
     addEventListener(ev, fn) { (this._listeners[ev] = this._listeners[ev] || []).push(fn); },
     appendChild(ch) { this.children.push(ch); },
   };
+  Object.defineProperty(el, 'className', {
+    get() { return Array.from(el.classList._s).join(' '); },
+    set(v) {
+      el.classList._s.clear();
+      String(v || '').split(/\s+/).filter(Boolean).forEach(c => el.classList._s.add(c));
+    },
+  });
   let _html = '';
   Object.defineProperty(el, 'innerHTML', {
     get() { return _html; },
@@ -39,6 +46,17 @@ function click(els, id) { (els[id]._listeners['click'] || []).forEach(f => f());
 function fireInput(els, id) { (els[id]._listeners['input'] || []).forEach(f => f()); }
 function assert(cond, msg) { if (!cond) { console.error('FAIL: ' + msg); process.exitCode = 1; } else { console.log('ok: ' + msg); } }
 function scene(e) { return e.curPool.textContent + '/' + e.curRecip.textContent + '/' + e.curEach.textContent; }
+// Count token spans in a pool container (piles -> children with class "tok").
+function countTokens(container) {
+  var n = 0;
+  for (var i = 0; i < container.children.length; i++){
+    var pile = container.children[i];
+    for (var j = 0; j < pile.children.length; j++){
+      if (pile.children[j].classList.contains('tok')) n++;
+    }
+  }
+  return n;
+}
 
 // ---- Base: 84/3=28 ----
 let e = freshRun();
@@ -126,4 +144,22 @@ e = freshRun();
 e.target.value = '21'; click(e, 'apply'); click(e, 'cancel');
 assert(e.fork.hidden === true && scene(e) === '84/3/28' && e.undo.disabled === true, 'C cancel leaves scene unchanged, no history');
 
-console.log(process.exitCode ? '\nSOME TESTS FAILED' : '\nALL v2 TESTS PASSED');
+// ---- BUG 5: bounded visualization — a million-unit fork must not spawn a million nodes ----
+e = freshRun();
+e.target.value = '1000000'; click(e, 'apply');
+assert(e.fork.hidden === false, 'B5 fork shown for 1000000');
+assert(e.pickB.disabled === false, 'B5 wayB valid (3 × 1000000 = 3000000)');
+assert(e.wayBRel.textContent === '3 × 1000000 = 3000000', 'B5 wayB relation exact');
+var nTok = countTokens(e.wayBPool);
+assert(nTok > 0 && nTok <= 1200, 'B5 wayB token nodes bounded (<=1200), got ' + nTok);
+assert(e.pickA.disabled === true, 'B5 wayA invalid (84 does not divide 1000000)');
+
+// ---- BUG 6: product overflow — Number.isInteger(MAX_SAFE_INTEGER * 3) is true, but inexact ----
+e = freshRun();
+e.target.value = '9007199254740991'; click(e, 'apply');
+assert(e.fork.hidden === false, 'B6 fork shown (target itself is a safe integer)');
+assert(e.pickB.disabled === true, 'B6 wayB disabled: 3 × MAX_SAFE_INTEGER is not a safe integer');
+assert(e.wayBDesc.textContent.indexOf('точной целочисленной') !== -1, 'B6 overflow explained: ' + e.wayBDesc.textContent);
+assert(e.pickA.disabled === true, 'B6 wayA disabled (84 / MAX_SAFE_INTEGER is not an integer)');
+
+console.log(process.exitCode ? '\nSOME TESTS FAILED' : '\nALL v3 TESTS PASSED');

@@ -202,7 +202,7 @@
   </section>
 
   <p class="foot">
-    Калькулятор «А если наоборот?» — v2, браузерная мастерская Иогана (тред <code>6e31ab8c</code>).
+    Калькулятор «А если наоборот?» — v3, браузерная мастерская Иогана.
     Vanilla JS, без сети и внешних зависимостей, локальные вычисления. Лицензия CC0.
     Фиксированная версия — в репозитории <code>daedalus-agent-lab/iohan-calculator</code> (commit SHA в треде).
   </p>
@@ -218,19 +218,42 @@
 
   function eachOf(pool, recipients){ return pool / recipients; }
 
+  // Bounded visualization. The token pool is a decorative metaphor (aria-hidden);
+  // the exact values live in the text (rel/cost/desc). Cap the DOM so a large
+  // computation never builds millions of nodes: grouped tokens/labels, not a
+  // linear span per unit, and the same cap applies to the number of recipient
+  // groups. Capping the render must not forbid normal large computations.
+  var MAX_PILES = 24;            // max recipient groups rendered
+  var MAX_TOKENS_PER_PILE = 48;  // max tokens rendered per group
+  var MAX_TOTAL_TOKENS = 1200;   // hard cap on total token spans
+
   function renderPool(container, pool, recipients, each){
     container.innerHTML = "";
     var even = Number.isInteger(each) && each > 0 && pool === each * recipients;
     if (even){
-      for (var i = 0; i < recipients; i++){
+      var piles = Math.min(recipients, MAX_PILES);
+      var perPile = Math.min(each, MAX_TOKENS_PER_PILE);
+      if (piles * perPile > MAX_TOTAL_TOKENS) perPile = Math.max(1, Math.floor(MAX_TOTAL_TOKENS / piles));
+      for (var i = 0; i < piles; i++){
         var pile = document.createElement("div"); pile.className = "pile";
-        for (var j = 0; j < each; j++){ var t = document.createElement("span"); t.className = "tok"; pile.appendChild(t); }
-        var lbl = document.createElement("span"); lbl.className = "pile-lbl"; lbl.textContent = each; pile.appendChild(lbl);
+        for (var j = 0; j < perPile; j++){ var t = document.createElement("span"); t.className = "tok"; pile.appendChild(t); }
+        var lbl = document.createElement("span"); lbl.className = "pile-lbl";
+        lbl.textContent = (each > perPile || recipients > piles) ? "× " + each : String(each);
+        pile.appendChild(lbl);
         container.appendChild(pile);
       }
+      if (recipients > piles){
+        var more = document.createElement("span"); more.className = "pile-lbl";
+        more.textContent = "… ещё " + (recipients - piles) + " групп";
+        container.appendChild(more);
+      }
     } else {
+      var tokens = Math.min(pool, MAX_TOTAL_TOKENS);
       var p = document.createElement("div"); p.className = "pile";
-      for (var k = 0; k < pool; k++){ var s = document.createElement("span"); s.className = "tok"; p.appendChild(s); }
+      for (var k = 0; k < tokens; k++){ var s = document.createElement("span"); s.className = "tok"; p.appendChild(s); }
+      var lbl2 = document.createElement("span"); lbl2.className = "pile-lbl";
+      lbl2.textContent = pool > tokens ? String(pool) + " (показано " + tokens + ")" : String(pool);
+      p.appendChild(lbl2);
       container.appendChild(p);
     }
   }
@@ -283,9 +306,10 @@
   function computeWays(target){
     var pool = state.pool, recipients = state.recipients;
     var aRecip = pool / target;
-    var aValid = Number.isInteger(aRecip) && aRecip > 0;
+    var aValid = Number.isSafeInteger(aRecip) && aRecip > 0;
     var bPool = target * recipients;
-    var bValid = Number.isInteger(bPool) && bPool > 0;
+    var bOverflow = !Number.isSafeInteger(bPool);
+    var bValid = Number.isSafeInteger(bPool) && bPool > 0;
 
     function deltaWord(diff, noun){
       if (diff > 0) return "увеличить на " + diff + " " + noun;
@@ -313,7 +337,9 @@
       title: "Оставить число людей, поменять сумму",
       desc: bValid
         ? ("Число людей " + recipients + " остаётся. Сумма: " + deltaWord(bPool - pool, "ед.") + " — с " + pool + " до " + bPool + ".")
-        : ("Недоступно."),
+        : (bOverflow
+            ? ("Сумма " + pool + " × " + target + " выходит за пределы точной целочисленной арифметики (слишком большое) — отказ до рендера.")
+            : "Недоступно."),
       cost: bValid ? ("Цена: " + (bPool > pool ? "+" + (bPool - pool) + " ед. к сумме" : bPool < pool ? "−" + (pool - bPool) + " ед. к сумме" : "без изменений")) : "Недоступно",
       rel: bValid ? (recipients + " × " + target + " = " + bPool) : "—"
     };
@@ -326,13 +352,15 @@
     $("wayADesc").textContent = w.a.desc;
     $("wayACost").textContent = w.a.cost;
     $("wayARel").textContent = w.a.rel;
-    renderPool($("wayAPool"), w.a.pool, w.a.recipients, w.a.each);
+    if (w.a.valid) renderPool($("wayAPool"), w.a.pool, w.a.recipients, w.a.each);
+    else $("wayAPool").innerHTML = "";
     $("pickA").disabled = !w.a.valid;
     // way B
     $("wayBDesc").textContent = w.b.desc;
     $("wayBCost").textContent = w.b.cost;
     $("wayBRel").textContent = w.b.rel;
-    renderPool($("wayBPool"), w.b.pool, w.b.recipients, w.b.each);
+    if (w.b.valid) renderPool($("wayBPool"), w.b.pool, w.b.recipients, w.b.each);
+    else $("wayBPool").innerHTML = "";
     $("pickB").disabled = !w.b.valid;
     $("fork").hidden = false;
   }
@@ -352,9 +380,11 @@
   // and editing the target invalidates the fork so a stale card can't be picked.
   function pick(way){
     if (!displayed) return;
+    var chosen = way === "a" ? displayed.a : displayed.b;
+    if (!chosen.valid) return;
     state.history.push({ pool: state.pool, recipients: state.recipients });
-    if (way === "a"){ state.pool = displayed.a.pool; state.recipients = displayed.a.recipients; }
-    else { state.pool = displayed.b.pool; state.recipients = displayed.b.recipients; }
+    state.pool = chosen.pool;
+    state.recipients = chosen.recipients;
     hideFork();
     renderScene(); renderHistory();
     settle($("curPoolTok"));
