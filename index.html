@@ -152,6 +152,21 @@
     <p class="scene-line">Сумма <b id="curPool">84</b> делят <b id="curRecip">3</b> человека — по <b id="curEach">28</b> каждому.</p>
     <span class="rel" id="curRel">3 × 28 = 84</span>
     <div class="pool" id="curPoolTok" aria-hidden="true"></div>
+    <p class="kicker" style="margin-top:16px">Это мой счёт — свои условия</p>
+    <div class="goal-row">
+      <label for="ownPool">сумма:</label>
+      <input type="text" id="ownPool" value="84" inputmode="numeric" autocomplete="off">
+      <label for="ownRecip">человек:</label>
+      <input type="text" id="ownRecip" value="3" inputmode="numeric" autocomplete="off">
+      <button id="setScene">Поставить сцену</button>
+    </div>
+    <p class="err" id="sceneErr" role="alert"></p>
+    <p class="kicker" style="margin-top:14px">Прямое действие: граница группы</p>
+    <div class="fork-actions" style="margin:0">
+      <button class="ghost" id="remPerson">− один человек уходит</button>
+      <button class="ghost" id="addPerson">+ один человек садится</button>
+    </div>
+    <p class="lede" style="margin:8px 0 0;font-size:14px">Счёт уже выставлен: его нельзя «просто уменьшить». Кнопки показывают оба пути до выбора — оставить сумму или оставить долю.</p>
   </section>
 
   <!-- goal / first action -->
@@ -202,7 +217,7 @@
   </section>
 
   <p class="foot">
-    Калькулятор «А если наоборот?» — v3, браузерная мастерская Иогана.
+    Калькулятор «А если наоборот?» — v4, браузерная мастерская Иогана.
     Vanilla JS, без сети и внешних зависимостей, локальные вычисления. Лицензия CC0.
     Фиксированная версия — в репозитории <code>daedalus-agent-lab/iohan-calculator</code> (commit SHA в треде).
   </p>
@@ -338,7 +353,7 @@
       desc: bValid
         ? ("Число людей " + recipients + " остаётся. Сумма: " + deltaWord(bPool - pool, "ед.") + " — с " + pool + " до " + bPool + ".")
         : (bOverflow
-            ? ("Сумма " + pool + " × " + target + " выходит за пределы точной целочисленной арифметики (слишком большое) — отказ до рендера.")
+            ? ("Число людей " + recipients + " × " + target + " выходит за пределы точной целочисленной арифметики (слишком большое) — отказ до рендера.")
             : "Недоступно."),
       cost: bValid ? ("Цена: " + (bPool > pool ? "+" + (bPool - pool) + " ед. к сумме" : bPool < pool ? "−" + (pool - bPool) + " ед. к сумме" : "без изменений")) : "Недоступно",
       rel: bValid ? (recipients + " × " + target + " = " + bPool) : "—"
@@ -409,6 +424,52 @@
     settle($("curPoolTok"));
   }
 
+  function parsePositiveInt(raw){
+    raw = (raw || "").trim();
+    if (raw === "" || !/^[0-9]+$/.test(raw)) return { ok:false, error:"Только целое число больше 0." };
+    var n = Number(raw);
+    if (!Number.isSafeInteger(n) || n <= 0) return { ok:false, error:"Число должно быть целым и больше 0." };
+    return { ok:true, value:n };
+  }
+
+  function setOwnScene(){
+    var p = parsePositiveInt($("ownPool").value);
+    var r = parsePositiveInt($("ownRecip").value);
+    if (!p.ok){ $("sceneErr").textContent = "Сумма: " + p.error; return; }
+    if (!r.ok){ $("sceneErr").textContent = "Люди: " + r.error; return; }
+    $("sceneErr").textContent = "";
+    state.history.push({ pool: state.pool, recipients: state.recipients });
+    state.pool = p.value;
+    state.recipients = r.value;
+    hideFork();
+    renderScene(); renderHistory();
+    settle($("curPoolTok"));
+  }
+
+  function previewPersonDelta(delta){
+    var next = state.recipients + delta;
+    if (next <= 0){
+      $("sceneErr").textContent = "Человек должно остаться больше 0.";
+      return;
+    }
+    $("sceneErr").textContent = "";
+    var newEach = eachOf(state.pool, next);
+    if (Number.isInteger(newEach) && newEach > 0){
+      $("target").value = String(newEach);
+    } else {
+      var keepShare = eachOf(state.pool, state.recipients);
+      if (!Number.isInteger(keepShare) || keepShare <= 0){
+        $("sceneErr").textContent = "Текущая доля не целая — задайте цель с клавиатуры.";
+        return;
+      }
+      $("target").value = String(keepShare);
+    }
+    showFork();
+  }
+
+  $("setScene").addEventListener("click", setOwnScene);
+  $("addPerson").addEventListener("click", function(){ previewPersonDelta(1); });
+  $("remPerson").addEventListener("click", function(){ previewPersonDelta(-1); });
   $("apply").addEventListener("click", showFork);
   $("pickA").addEventListener("click", function(){ pick("a"); });
   $("pickB").addEventListener("click", function(){ pick("b"); });

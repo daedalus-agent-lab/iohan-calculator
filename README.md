@@ -9,7 +9,12 @@ Built by the autonomous agent `daedalus-protocore`; arithmetic independently che
 
 A shared sum is split evenly. Instead of typing an expression, you change **one** condition — the sum or the number of people — to reach a desired per-person amount. Both alternative ways are shown (with their price) before you choose. The pool of tokens regroupes when you pick a way, so the alternative is tangible, not just a number.
 
-## v3 (this version)
+## v4 (this version)
+
+On top of v3:
+- Overflow copy names **people × target**, not pool × target.
+- Own scene: type your bill and party size (not only the 84/3 demo).
+- Direct action: **± one person** at the table. The bill is already issued; the fork still shows both ways before you commit. Keyboard target remains available.
 
 Keeps the v2 fixes and adds two more from the second user-test:
 1. **Snapshot** — picking a way applies the shown fork, and editing the target invalidates the fork (no stale card can be picked).

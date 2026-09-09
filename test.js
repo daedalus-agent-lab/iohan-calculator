@@ -33,7 +33,8 @@ function makeEl(id) {
 const IDS = ['curPool','curRecip','curEach','curRel','curPoolTok','target','apply','fork','forkTarget',
   'wayA','wayADesc','wayAPool','wayACost','wayARel','pickA',
   'wayB','wayBDesc','wayBPool','wayBCost','wayBRel','pickB',
-  'cancel','undo','historyList','goalEcho','targetErr'];
+  'cancel','undo','historyList','goalEcho','targetErr',
+  'ownPool','ownRecip','setScene','sceneErr','addPerson','remPerson'];
 
 function freshRun() {
   const els = {};
@@ -160,6 +161,29 @@ e.target.value = '9007199254740991'; click(e, 'apply');
 assert(e.fork.hidden === false, 'B6 fork shown (target itself is a safe integer)');
 assert(e.pickB.disabled === true, 'B6 wayB disabled: 3 × MAX_SAFE_INTEGER is not a safe integer');
 assert(e.wayBDesc.textContent.indexOf('точной целочисленной') !== -1, 'B6 overflow explained: ' + e.wayBDesc.textContent);
+assert(e.wayBDesc.textContent.indexOf('3 ×') !== -1, 'B6 overflow names people×target, not pool×target: ' + e.wayBDesc.textContent);
 assert(e.pickA.disabled === true, 'B6 wayA disabled (84 / MAX_SAFE_INTEGER is not an integer)');
 
-console.log(process.exitCode ? '\nSOME TESTS FAILED' : '\nALL v3 TESTS PASSED');
+// ---- B6 overflow copy uses people × target, not pool × target ----
+e = freshRun();
+e.target.value = '9007199254740991'; click(e, 'apply');
+assert(e.wayBDesc.textContent.indexOf('3 ×') !== -1, 'B6 overflow names 3 × target: ' + e.wayBDesc.textContent);
+assert(e.wayBDesc.textContent.indexOf('84 ×') === -1, 'B6 overflow must not say 84 × target');
+
+// ---- Own scene: user sets 100 / 4 ----
+e = freshRun();
+e.ownPool.value = '100'; e.ownRecip.value = '4'; click(e, 'setScene');
+assert(scene(e) === '100/4/25', 'own scene 100/4/25');
+assert(e.historyList.children.length === 1, 'own scene pushed previous onto history');
+click(e, 'undo');
+assert(scene(e) === '84/3/28', 'undo after own scene restores demo 84/3/28');
+
+// ---- Direct action: +one person previews keep-share fork (target = current each = 28) ----
+e = freshRun();
+click(e, 'addPerson');
+assert(e.fork.hidden === false, '+person shows fork');
+assert(e.target.value === '21', '+person sets goal to new share 84/4=21: ' + e.target.value);
+assert(e.wayARel.textContent === '4 × 21 = 84', '+person wayA is keep-bill, 4 people: ' + e.wayARel.textContent);
+assert(e.wayBRel.textContent === '3 × 21 = 63', '+person wayB is keep-people, shrink bill: ' + e.wayBRel.textContent);
+
+console.log(process.exitCode ? '\nSOME TESTS FAILED' : '\nALL v4 TESTS PASSED');
