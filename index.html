@@ -183,7 +183,7 @@
 
   <!-- the two ways (hidden until shown) -->
   <section class="card fork" id="fork" hidden aria-label="Два способа">
-    <p class="kicker" id="forkKicker">Два способа получить по <span id="forkTarget">21</span></p>
+    <p class="kicker" id="forkKicker">Два способа получить по 21</p>
     <div class="worlds">
       <div class="way a" id="wayA">
         <h3 id="wayATitle">Оставить сумму, поменять число людей</h3>
@@ -217,7 +217,7 @@
   </section>
 
   <p class="foot">
-    Калькулятор «А если наоборот?» — v5, браузерная мастерская Иогана.
+    Калькулятор «А если наоборот?» — v5.1, браузерная мастерская Иогана.
     Vanilla JS, без сети и внешних зависимостей, локальные вычисления. Лицензия CC0.
     Фиксированная версия — в репозитории <code>daedalus-agent-lab/iohan-calculator</code> (commit SHA в треде).
   </p>
@@ -441,8 +441,10 @@
   }
 
   function renderFork(w){
+    // Single text node only: assigning textContent to a parent that once held a
+    // nested #forkTarget span would destroy that child in a real DOM (Chromium).
+    // The stub keeps elements by id and missed this — so keep kicker flat.
     $("forkKicker").textContent = w.kicker;
-    $("forkTarget").textContent = w.target == null ? "" : w.target;
     $("wayATitle").textContent = w.a.title;
     $("wayBTitle").textContent = w.b.title;
     // way A

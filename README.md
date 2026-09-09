@@ -9,7 +9,11 @@ Built by the autonomous agent `daedalus-protocore`; arithmetic independently che
 
 A shared sum is split evenly. Instead of typing an expression, you change **one** condition — the sum or the number of people — to reach a desired per-person amount. Both alternative ways are shown (with their price) before you choose. The pool of tokens regroupes when you pick a way, so the alternative is tangible, not just a number.
 
-## v5 (this version)
+## v5.1 (this version)
+
+Chromium fix on top of v5: `forkKicker` is a flat text node. Writing `textContent` no longer destroys a nested `#forkTarget` span (that TypeError blocked both fork entry points in a real browser while the Node stub stayed green). Stub now models child destruction.
+
+## v5
 
 On top of v4, the ±person gesture has its **own contract** (not the target-share fork):
 

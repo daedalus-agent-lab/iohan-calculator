@@ -30,7 +30,7 @@ function makeEl(id) {
   });
   return el;
 }
-const IDS = ['curPool','curRecip','curEach','curRel','curPoolTok','target','apply','fork','forkTarget','forkKicker',
+const IDS = ['curPool','curRecip','curEach','curRel','curPoolTok','target','apply','fork','forkKicker',
   'wayA','wayATitle','wayADesc','wayAPool','wayACost','wayARel','pickA',
   'wayB','wayBTitle','wayBDesc','wayBPool','wayBCost','wayBRel','pickB',
   'cancel','undo','historyList','goalEcho','targetErr',
@@ -39,7 +39,35 @@ const IDS = ['curPool','curRecip','curEach','curRel','curPoolTok','target','appl
 function freshRun() {
   const els = {};
   IDS.forEach(id => els[id] = makeEl(id));
-  const document = { getElementById: (id) => els[id], createElement: (tag) => makeEl('li') };
+  // Model real DOM: setting textContent on a parent clears its element children
+  // and nulls getElementById for destroyed ids (Chromium bug class iohan found).
+  const document = {
+    getElementById: (id) => {
+      const el = els[id];
+      if (!el) return null;
+      if (el._destroyed) return null;
+      return el;
+    },
+    createElement: (tag) => makeEl('li'),
+  };
+  // Nest forkTarget under forkKicker like the old HTML did, then ensure our
+  // code never relies on the child surviving a parent textContent write.
+  const nested = makeEl('forkTarget');
+  els.forkKicker.appendChild(nested);
+  els.forkTarget = nested;
+  const origKickSet = Object.getOwnPropertyDescriptor(els.forkKicker, 'textContent') ||
+    Object.getOwnPropertyDescriptor(Object.getPrototypeOf(els.forkKicker), 'textContent');
+  // Override textContent setter on forkKicker to destroy children (browser semantics).
+  let _kickText = els.forkKicker.textContent;
+  Object.defineProperty(els.forkKicker, 'textContent', {
+    get() { return _kickText; },
+    set(v) {
+      _kickText = String(v);
+      els.forkKicker.children.forEach(ch => { ch._destroyed = true; });
+      els.forkKicker.children = [];
+    },
+    configurable: true,
+  });
   new Function('document', script)(document);
   return els;
 }
@@ -177,6 +205,20 @@ assert(scene(e) === '100/4/25', 'own scene 100/4/25');
 assert(e.historyList.children.length === 1, 'own scene pushed previous onto history');
 click(e, 'undo');
 assert(scene(e) === '84/3/28', 'undo after own scene restores demo 84/3/28');
+
+// ---- v5.1 Chromium regression: parent textContent must not null a nested id ----
+// Old HTML had <p id=forkKicker>…<span id=forkTarget>…</span></p>. Assigning
+// forkKicker.textContent destroyed forkTarget; next line threw TypeError in
+// real Chromium while the flat stub stayed green. Stub now destroys children.
+e = freshRun();
+click(e, 'addPerson');
+assert(e.fork.hidden === false, 'v5.1 +person opens fork after flat kicker write');
+assert(e.forkKicker.textContent.indexOf('4') !== -1, 'v5.1 kicker text set: ' + e.forkKicker.textContent);
+assert(e.wayARel.textContent === '4 × 21 = 84', 'v5.1 cards rendered after kicker write');
+e = freshRun();
+e.target.value = '21'; click(e, 'apply');
+assert(e.fork.hidden === false, 'v5.1 apply also opens fork (second entry point)');
+assert(e.wayBRel.textContent === '3 × 21 = 63', 'v5.1 apply cards visible');
 
 // ---- v5: person-delta contract (iohan review) ----
 // From 100/4, −1 person: BOTH cards must end with 3 people.
