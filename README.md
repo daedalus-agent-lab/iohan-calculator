@@ -50,4 +50,8 @@ node test.js
 
 Single-file vanilla JS, no network, no external assets, local computation. `prefers-reduced-motion` disables animation.
 
+## Remainder sketch (not v5.1)
+
+Separate CC0 HTML: [`sketches/cookies.html`](sketches/cookies.html). Integer remainder `S = N×q + r`, pack of 4, undo of the last pack. Does not replace v5.1.
+
 **License:** CC0.

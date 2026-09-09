@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Эскиз: пачка печенья на стол, целый остаток. CC0.">
+<title>Печенье на столе</title>
+<style>
+  :root {
+    --ink: #20233B;
+    --cream: #FFF6E4;
+    --paper: #FFFDF6;
+    --cloth: #F5D46E;
+    --cloth-light: #FFE692;
+    --berry: #C94B64;
+    --berry-dark: #8E2942;
+    --sky: #51BBD2;
+    --sky-light: #D8F5FA;
+    --leaf: #39875F;
+    --cookie: #D98243;
+    --cookie-light: #F7B45D;
+    --chip: #693F2D;
+    --line: 3px solid var(--ink);
+    --shadow: 5px 5px 0 var(--ink);
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--ink); }
+  body {
+    min-width: 0;
+    margin: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 10% 10%, rgba(255,246,228,.18) 0 2px, transparent 2.5px) 0 0 / 26px 26px,
+      var(--ink);
+    font-family: "Arial Rounded MT Bold", "Trebuchet MS", ui-rounded, system-ui, sans-serif;
+  }
+  button, summary { font: inherit; }
+  button { -webkit-tap-highlight-color: transparent; }
+  .page { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: clamp(26px, 5vw, 64px) 0 52px; }
+  .masthead { color: var(--cream); max-width: 780px; }
+  .kicker { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: .94rem; font-weight: 800; }
+  .kicker::before { content: ""; width: 13px; height: 13px; background: var(--sky); border: 2px solid var(--cream); border-radius: 50%; }
+  h1 { margin: 0; font-size: clamp(2.5rem, 7vw, 4.3rem); line-height: .96; letter-spacing: -.065em; color: var(--cream); text-wrap: balance; }
+  .intro { margin: 16px 0 0; max-width: 60ch; color: #F9EACB; font: 600 clamp(1rem, 2.1vw, 1.17rem)/1.5 system-ui, sans-serif; }
+
+  .sharing-table { position: relative; margin-top: clamp(26px, 5vw, 42px); overflow: hidden; border: var(--line); border-radius: 28px; background-color: var(--cloth); background-image: linear-gradient(45deg, var(--cloth-light) 25%, transparent 25%, transparent 75%, var(--cloth-light) 75%), linear-gradient(45deg, var(--cloth-light) 25%, transparent 25%, transparent 75%, var(--cloth-light) 75%); background-position: 0 0, 32px 32px; background-size: 64px 64px; box-shadow: 9px 9px 0 rgba(0,0,0,.3); }
+  .table-inner { position: relative; padding: clamp(18px, 3vw, 34px); }
+  .table-inner::before { content: ""; position: absolute; inset: 13px; border: 2px dashed rgba(32,35,59,.38); border-radius: 18px; pointer-events: none; }
+  .table-head { position: relative; display: flex; justify-content: space-between; gap: 20px; align-items: end; padding: 3px 2px 22px; }
+  .table-head h2 { margin: 0; font-size: clamp(1.45rem, 3vw, 2.15rem); line-height: 1; letter-spacing: -.045em; }
+  .status { margin: 0; max-width: 29ch; text-align: right; font: 700 .95rem/1.35 system-ui, sans-serif; }
+  .stats { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: clamp(26px, 4vw, 44px); }
+  .stat { min-width: 0; padding: 12px 14px; border: var(--line); border-radius: 15px; background: var(--paper); box-shadow: 3px 3px 0 rgba(32,35,59,.35); }
+  .stat:nth-child(2) { background: #FFE8EF; }
+  .stat:nth-child(4) { background: var(--sky-light); }
+  .stat-name { display: block; font-size: .81rem; font-weight: 800; line-height: 1.15; }
+  .stat-value { display: block; margin-top: 3px; font-size: clamp(1.55rem, 3.2vw, 2.25rem); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+
+  .scene { position: relative; display: grid; grid-template-columns: minmax(138px, .9fr) repeat(3, minmax(120px, 1fr)) minmax(142px, 1fr); align-items: end; gap: clamp(12px, 2vw, 22px); }
+  .pack-zone { align-self: center; padding-bottom: 4px; }
+  .pack-label { display: block; margin-bottom: 8px; font-size: .82rem; font-weight: 900; }
+  .pack-sleeve { display: flex; min-height: 126px; align-items: center; justify-content: center; gap: 3px; padding: 12px 8px; border: var(--line); border-radius: 13px 27px 27px 13px; background: var(--berry); box-shadow: var(--shadow); transform: rotate(-3deg); }
+  .pack-sleeve::before { content: "4"; align-self: stretch; display: grid; place-items: center; width: 30px; margin-right: 3px; color: var(--cream); border-right: 2px solid rgba(255,246,228,.75); font-size: 1.65rem; font-weight: 900; }
+  .pack-caption { margin: 13px 0 0; font: 700 .9rem/1.28 system-ui, sans-serif; }
+
+  .serving { min-width: 0; text-align: center; }
+  .serving-name { display: block; min-height: 20px; margin: 0 0 7px; font-size: .88rem; font-weight: 900; }
+  .plate { display: flex; min-height: 137px; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap; padding: 22px 15px; border: var(--line); border-radius: 50%; background: var(--paper); box-shadow: inset 0 -9px 0 #E9D2AA, var(--shadow); }
+  .serving-count { display: block; margin-top: 9px; font: 800 .9rem/1.15 system-ui, sans-serif; }
+  .serving-count strong { font: 900 1.2rem/1 var(--ink); font-variant-numeric: tabular-nums; }
+  .leftover .serving-name { color: var(--ink); }
+  .dish { min-height: 137px; background: var(--sky-light); box-shadow: inset 0 -9px 0 #9ED9E6, var(--shadow); }
+  .empty-note { width: 100%; color: #315D67; font: 800 .83rem/1.2 system-ui, sans-serif; }
+  .cookie { position: relative; display: inline-block; width: 25px; height: 25px; flex: 0 0 auto; border: 2px solid var(--chip); border-radius: 50%; background: radial-gradient(circle at 36% 31%, var(--cookie-light) 0 16%, transparent 17%), var(--cookie); box-shadow: inset -3px -3px 0 rgba(105,63,45,.2); }
+  .cookie::before, .cookie::after { content: ""; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: var(--chip); }
+  .cookie::before { left: 6px; top: 13px; box-shadow: 9px -4px 0 var(--chip); }
+  .cookie::after { left: 15px; top: 15px; }
+  .pack-sleeve .cookie { width: 22px; height: 22px; }
+  .new-cookie { animation: settle .45s cubic-bezier(.2,.9,.28,1.25) both; }
+  .leftover .new-cookie { animation-delay: .12s; }
+
+  .actions { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: clamp(30px, 4vw, 42px); }
+  .action { min-height: 50px; padding: 12px 19px; border: var(--line); border-radius: 14px; cursor: pointer; font-weight: 900; line-height: 1.15; transition: transform .14s ease, box-shadow .14s ease, background .14s ease; }
+  .primary { color: var(--cream); background: var(--berry); box-shadow: 4px 4px 0 var(--ink); }
+  .secondary { color: var(--ink); background: var(--paper); box-shadow: 3px 3px 0 var(--ink); }
+  .action:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
+  .action:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  .action:focus-visible, summary:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
+  .action:disabled { cursor: not-allowed; color: #6C6E7E; background: #E2DFD5; box-shadow: none; transform: none; }
+  .action-help { margin: 0; max-width: 39ch; font: 700 .9rem/1.36 system-ui, sans-serif; }
+  details { position: relative; margin-top: 17px; padding: 0 2px; font: .9rem/1.45 system-ui, sans-serif; }
+  summary { cursor: pointer; font-weight: 800; }
+  .math { margin: 9px 0 0; max-width: 60ch; }
+  .math code { padding: 2px 5px; border-radius: 4px; background: rgba(255,253,246,.65); color: var(--ink); font: 800 .88em/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+  .live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .confirmed .sharing-table { animation: table-confirm .56s ease-out; }
+  @keyframes settle { from { transform: translateY(-18px) rotate(-15deg); opacity: .1; } to { transform: translateY(0) rotate(0); opacity: 1; } }
+  @keyframes table-confirm { 0%, 100% { filter: none; } 42% { filter: brightness(1.09) saturate(1.1); } }
+  @media (max-width: 840px) {
+    .scene { grid-template-columns: minmax(150px, 1fr) repeat(3, minmax(106px, 1fr)); }
+    .leftover { grid-column: 2 / 4; width: min(190px, 100%); justify-self: center; margin-top: 4px; }
+  }
+  @media (max-width: 600px) {
+    .page { width: min(100% - 24px, 540px); padding-top: 25px; }
+    .sharing-table { border-radius: 20px; }
+    .table-inner { padding: 16px; }
+    .table-head { display: block; padding-bottom: 17px; }
+    .table-head h2 { font-size: 1.55rem; }
+    .status { margin-top: 7px; text-align: left; }
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 27px; }
+    .stat { padding: 11px; }
+    .scene { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 21px 13px; }
+    .pack-zone { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto; column-gap: 17px; align-items: center; padding: 0 7px 3px 0; }
+    .pack-label { grid-column: 1; margin: 0; align-self: end; }
+    .pack-sleeve { grid-column: 2; grid-row: 1 / 3; width: 121px; min-height: 88px; }
+    .pack-caption { grid-column: 1; margin: 4px 0 0; }
+    .plate, .dish { min-height: 126px; padding: 19px 12px; }
+    .cookie { width: 23px; height: 23px; }
+    .leftover { grid-column: auto; width: auto; margin: 0; }
+    .actions { gap: 10px; margin-top: 31px; }
+    .primary { flex: 1 1 220px; }
+    .secondary { flex: 0 1 auto; }
+    .action-help { flex: 1 0 100%; }
+  }
+  @media (max-width: 355px) {
+    .scene { grid-template-columns: 1fr; }
+    .serving { max-width: 220px; width: 100%; justify-self: center; }
+    .pack-zone { width: 100%; }
+    .action { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<main class="page" id="page">
+  <header class="masthead">
+    <p class="kicker">Эскиз остатка</p>
+    <h1>Добавляйте пачки, чтобы всем досталось поровну</h1>
+    <p class="intro">Три тарелки и блюдо для остатка. Пачка из четырёх видна до клика. Если поровну не делится — лишнее лежит отдельно.</p>
+  </header>
+
+  <section class="sharing-table" aria-labelledby="table-title">
+    <div class="table-inner">
+      <div class="table-head">
+        <h2 id="table-title">Стол</h2>
+        <p class="status" id="status">Всем поровну, остатка нет.</p>
+      </div>
+      <div class="stats" aria-label="Счёт">
+        <div class="stat"><span class="stat-name">Печенье</span><strong class="stat-value" id="total">12</strong></div>
+        <div class="stat"><span class="stat-name">Люди</span><strong class="stat-value">3</strong></div>
+        <div class="stat"><span class="stat-name">На тарелке</span><strong class="stat-value" id="each">4</strong></div>
+        <div class="stat"><span class="stat-name">Остаток</span><strong class="stat-value" id="remainder">0</strong></div>
+      </div>
+
+      <div class="scene" aria-label="Три тарелки и блюдо для остатка">
+        <div class="pack-zone" aria-label="Пачка из четырёх печений">
+          <span class="pack-label">Пачка</span>
+          <div class="pack-sleeve" aria-hidden="true"><span class="cookie"></span><span class="cookie"></span><span class="cookie"></span><span class="cookie"></span></div>
+          <p class="pack-caption">4 печенья, готовы добавить</p>
+        </div>
+        <div class="serving"><span class="serving-name">Тарелка Ани</span><div class="plate" id="plate-1" aria-label="У Ани 4 печенья"></div><span class="serving-count" id="label-1"><strong id="count-1">4</strong> печенья</span></div>
+        <div class="serving"><span class="serving-name">Тарелка Бори</span><div class="plate" id="plate-2" aria-label="У Бори 4 печенья"></div><span class="serving-count" id="label-2"><strong id="count-2">4</strong> печенья</span></div>
+        <div class="serving"><span class="serving-name">Тарелка Киры</span><div class="plate" id="plate-3" aria-label="У Киры 4 печенья"></div><span class="serving-count" id="label-3"><strong id="count-3">4</strong> печенья</span></div>
+        <div class="serving leftover"><span class="serving-name">Блюдо для остатка</span><div class="plate dish" id="leftover-dish" aria-label="Остаток: нет"></div><span class="serving-count" id="leftover-copy">остатка нет</span></div>
+      </div>
+
+      <div class="actions">
+        <button class="action primary" type="button" id="add">Положить пачку из 4</button>
+        <button class="action secondary" type="button" id="undo" disabled>Отменить пачку</button>
+        <p class="action-help">Пачка всегда из четырёх. Размер не меняется молча.</p>
+      </div>
+      <details>
+        <summary>Как считается</summary>
+        <p class="math" id="math">Тихая формула: <code>12 = 3 × 4 + 0</code>. Остаток — целое от 0 до 2. CC0, v5.1 калькулятор не тронут.</p>
+      </details>
+    </div>
+  </section>
+  <p class="live" id="announcer" aria-live="polite" aria-atomic="true"></p>
+</main>
+<script>
+(() => {
+  const PEOPLE = 3;
+  const PACK = 4;
+  const START = 12;
+  const MAX_DRAWN = 8;
+  const NAMES = ['Аня', 'Боря', 'Кира'];
+  let total = START;
+  let previousEach = Math.floor(total / PEOPLE);
+  const history = [];
+  const wordCookies = (n) => {
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return n + ' печенье';
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return n + ' печенья';
+    return n + ' печений';
+  };
+
+  const byId = (id) => document.getElementById(id);
+  const cookie = (newCookie = false) => {
+    const item = document.createElement('span');
+    item.className = `cookie${newCookie ? ' new-cookie' : ''}`;
+    item.setAttribute('aria-hidden', 'true');
+    return item;
+  };
+  const fillDish = (element, count, isNew) => {
+    element.replaceChildren();
+    if (!count) {
+      const note = document.createElement('span');
+      note.className = 'empty-note';
+      note.textContent = 'остатка нет';
+      element.append(note);
+      return;
+    }
+    const shown = Math.min(count, MAX_DRAWN);
+    for (let i = 0; i < shown; i += 1) element.append(cookie(isNew));
+  };
+  const render = (announce = false) => {
+    const each = Math.floor(total / PEOPLE);
+    const leftover = total % PEOPLE;
+    const adding = total > START;
+    byId('total').textContent = total;
+    byId('each').textContent = each;
+    byId('remainder').textContent = leftover;
+    ['1', '2', '3'].forEach((number) => {
+      byId(`label-${number}`).innerHTML = `<strong id="count-${number}">${each}</strong> ${wordCookies(each).split(' ').slice(1).join(' ')}`;
+      const plate = byId(`plate-${number}`);
+      plate.setAttribute('aria-label', `У ${NAMES[Number(number) - 1]} ${wordCookies(each)}`);
+      fillDish(plate, each, adding && each > previousEach);
+    });
+    const dish = byId('leftover-dish');
+    dish.setAttribute('aria-label', leftover ? `Остаток: ${wordCookies(leftover)}` : 'Остаток: нет');
+    fillDish(dish, leftover, adding && leftover > 0);
+    byId('leftover-copy').textContent = leftover ? wordCookies(leftover) + ' в остатке' : 'остатка нет';
+    byId('math').innerHTML = `Тихая формула: <code>${total} = ${PEOPLE} × ${each} + ${leftover}</code>. Остаток — целое от 0 до ${PEOPLE - 1}. CC0, v5.1 калькулятор не тронут.`;
+    byId('status').textContent = leftover ? 'Одно печенье нельзя разделить поровну.' : 'Всем поровну, остатка нет.';
+    byId('undo').disabled = history.length === 0;
+    if (announce) byId('announcer').textContent = `${wordCookies(total)}: на тарелке ${each}; ${leftover ? wordCookies(leftover) + ' в остатке' : 'остатка нет'}.`;
+    previousEach = each;
+  };
+  byId('add').addEventListener('click', () => {
+    history.push(total);
+    total += PACK;
+    byId('page').classList.remove('confirmed');
+    void byId('page').offsetWidth;
+    byId('page').classList.add('confirmed');
+    render(true);
+  });
+  byId('undo').addEventListener('click', () => {
+    if (!history.length) return;
+    total = history.pop();
+    render(true);
+  });
+  render();
+})();
+</script>
+</body>
+</html>
