@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Эскиз: тарелки, пачки 3/4/6 и карточка минимума 4/6/8. CC0.">
+<title>Тарелки и пачки</title>
+<style>
+  :root { --ink:#20233b; --cream:#fff6e4; --paper:#fffdf6; --cloth:#f5d46e; --cloth-light:#ffe692; --berry:#c94b64; --berry-dark:#8e2942; --sky:#51bbd2; --sky-light:#d8f5fa; --leaf:#39875f; --cookie:#d98243; --cookie-light:#f7b45d; --chip:#693f2d; --line:3px solid var(--ink); --shadow:5px 5px 0 var(--ink); }
+  * { box-sizing:border-box; }
+  html { background:var(--ink); }
+  body { min-width:0; margin:0; color:var(--ink); background:radial-gradient(circle at 10% 10%,rgba(255,246,228,.18) 0 2px,transparent 2.5px) 0 0/26px 26px,var(--ink); font-family:"Arial Rounded MT Bold","Trebuchet MS",ui-rounded,system-ui,sans-serif; }
+  button,summary { font:inherit; } button { -webkit-tap-highlight-color:transparent; }
+  .page { width:min(1180px,calc(100% - 32px)); margin:0 auto; padding:clamp(26px,5vw,64px) 0 52px; }
+  .masthead { max-width:820px; color:var(--cream); }
+  .kicker { display:inline-flex; align-items:center; gap:8px; margin:0 0 12px; font-size:.94rem; font-weight:800; }
+  .kicker::before { content:""; width:13px; height:13px; border:2px solid var(--cream); border-radius:50%; background:var(--sky); }
+  h1 { margin:0; color:var(--cream); font-size:clamp(2.2rem,6vw,3.8rem); line-height:.96; letter-spacing:-.065em; text-wrap:balance; }
+  .intro { max-width:63ch; margin:16px 0 0; color:#f9eacb; font:600 clamp(1rem,2.1vw,1.17rem)/1.5 system-ui,sans-serif; }
+  .sharing-table { position:relative; overflow:hidden; margin-top:clamp(26px,5vw,42px); border:var(--line); border-radius:28px; background-color:var(--cloth); background-image:linear-gradient(45deg,var(--cloth-light) 25%,transparent 25%,transparent 75%,var(--cloth-light) 75%),linear-gradient(45deg,var(--cloth-light) 25%,transparent 25%,transparent 75%,var(--cloth-light) 75%); background-position:0 0,32px 32px; background-size:64px 64px; box-shadow:9px 9px 0 rgba(0,0,0,.3); }
+  .table-inner { position:relative; padding:clamp(18px,3vw,34px); }
+  .table-inner::before { content:""; position:absolute; inset:13px; border:2px dashed rgba(32,35,59,.38); border-radius:18px; pointer-events:none; }
+  .table-head { position:relative; display:flex; align-items:end; justify-content:space-between; gap:20px; padding:3px 2px 18px; }
+  .table-head h2 { margin:0; font-size:clamp(1.45rem,3vw,2.15rem); line-height:1; letter-spacing:-.045em; }
+  .status { max-width:38ch; margin:0; text-align:right; font:700 .95rem/1.35 system-ui,sans-serif; }
+  .goal { position:relative; display:flex; align-items:center; gap:12px; margin:0 0 14px; padding:12px 14px; border:var(--line); border-radius:15px; background:#ffe8ef; box-shadow:3px 3px 0 rgba(32,35,59,.35); }
+  .goal-mark { display:grid; width:34px; height:34px; flex:0 0 auto; place-items:center; border:2px solid var(--ink); border-radius:50%; background:var(--berry); color:var(--cream); font-size:1.15rem; font-weight:900; }
+  .goal-copy { margin:0; font:800 .95rem/1.25 system-ui,sans-serif; }
+  .goal.is-met { background:#daf3dd; } .goal.is-met .goal-mark { background:var(--leaf); }
+  .stats { position:relative; display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:18px; }
+  .stat { min-width:0; padding:12px 14px; border:var(--line); border-radius:15px; background:var(--paper); box-shadow:3px 3px 0 rgba(32,35,59,.35); }
+  .stat:nth-child(2){background:#ffe8ef} .stat:nth-child(4){background:var(--sky-light)}
+  .stat-name { display:block; font-size:.81rem; font-weight:800; line-height:1.15; }
+  .stat-value { display:block; margin-top:3px; font-size:clamp(1.4rem,3vw,2.1rem); font-weight:900; line-height:1; font-variant-numeric:tabular-nums; }
+  .chooser { position:relative; display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+  .chooser fieldset { margin:0; padding:10px 12px; border:var(--line); border-radius:15px; background:var(--paper); box-shadow:3px 3px 0 rgba(32,35,59,.35); }
+  .chooser legend { padding:0 6px; font-weight:900; font-size:.85rem; }
+  .chooser label { display:inline-flex; align-items:center; gap:6px; margin-right:10px; font:800 .9rem/1.2 system-ui,sans-serif; cursor:pointer; }
+  .scene { position:relative; display:flex; flex-wrap:wrap; align-items:end; gap:clamp(12px,2vw,22px); }
+  .pack-zone { align-self:center; }
+  .pack-label { display:block; margin-bottom:8px; font-size:.82rem; font-weight:900; }
+  .pack-sleeve { display:flex; min-width:118px; min-height:110px; align-items:center; justify-content:center; gap:3px; padding:12px 8px; border:var(--line); border-radius:13px 27px 27px 13px; color:var(--cream); background:var(--berry); box-shadow:var(--shadow); cursor:pointer; transform:rotate(-3deg); }
+  .pack-sleeve:hover { background:var(--berry-dark); }
+  .pack-sleeve:focus-visible, .secondary:focus-visible, input:focus-visible, summary:focus-visible { outline:4px solid var(--sky); outline-offset:4px; }
+  .pack-caption { margin:13px 0 0; font:700 .9rem/1.28 system-ui,sans-serif; }
+  .serving { min-width:120px; flex:1 1 120px; max-width:180px; text-align:center; }
+  .serving-name { display:block; margin:0 0 7px; font-size:.88rem; font-weight:900; }
+  .plate { display:flex; min-height:137px; align-items:center; justify-content:center; gap:5px; flex-wrap:wrap; padding:22px 15px; border:var(--line); border-radius:50%; background:var(--paper); box-shadow:inset 0 -9px 0 #e9d2aa,var(--shadow); }
+  .dish { background:var(--sky-light); box-shadow:inset 0 -9px 0 #9ed9e6,var(--shadow); }
+  .serving-count { display:block; margin-top:9px; font:800 .9rem/1.15 system-ui,sans-serif; }
+  .empty-note { width:100%; color:#315d67; font:800 .83rem/1.2 system-ui,sans-serif; }
+  .cookie { position:relative; display:inline-block; width:25px; height:25px; flex:0 0 auto; border:2px solid var(--chip); border-radius:50%; background:radial-gradient(circle at 36% 31%,var(--cookie-light) 0 16%,transparent 17%),var(--cookie); }
+  .cookie::before,.cookie::after { content:""; position:absolute; width:4px; height:4px; border-radius:50%; background:var(--chip); }
+  .cookie::before { top:13px; left:6px; box-shadow:9px -4px 0 var(--chip); }
+  .cookie::after { top:15px; left:15px; }
+  .new-cookie { animation:settle .45s cubic-bezier(.2,.9,.28,1.25) both; }
+  .under-scene { position:relative; display:flex; flex-wrap:wrap; align-items:center; gap:12px 16px; margin-top:clamp(22px,4vw,36px); }
+  .secondary { min-height:48px; padding:11px 16px; border:var(--line); border-radius:14px; color:var(--ink); background:var(--paper); box-shadow:3px 3px 0 var(--ink); cursor:pointer; font-weight:900; }
+  .secondary:disabled { cursor:not-allowed; color:#6c6e7e; background:#e2dfd5; box-shadow:none; }
+  .action-help { max-width:52ch; margin:0; font:700 .9rem/1.36 system-ui,sans-serif; }
+  .scale-note { margin:14px 2px 0; color:#315d67; font:800 .86rem/1.35 system-ui,sans-serif; }
+  details { margin-top:17px; font:.9rem/1.45 system-ui,sans-serif; }
+  summary { cursor:pointer; font-weight:800; }
+  .math { max-width:60ch; margin:9px 0 0; }
+  .math code { padding:2px 5px; border-radius:4px; background:rgba(255,253,246,.65); font:800 .88em/1 ui-monospace,SFMono-Regular,Consolas,monospace; }
+  .live { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+  .colophon { max-width:70ch; margin:22px 0 0; color:#f9eacb; font:600 .88rem/1.4 system-ui,sans-serif; }
+  @keyframes settle { from { transform:translateY(-18px) rotate(-15deg); opacity:.1; } to { transform:none; opacity:1; } }
+  @media(max-width:700px){ .stats{grid-template-columns:repeat(2,1fr);} .table-head{display:block;} .status{text-align:left;margin-top:8px;} }
+  @media(prefers-reduced-motion:reduce){ *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important} }
+</style>
+</head>
+<body>
+<main class="page" id="page">
+  <header class="masthead">
+    <p class="kicker">Эскиз тарелок</p>
+    <h1>Тарелки и пачки</h1>
+    <p class="intro">Пачка меняет только будущие добавления. Новая тарелка делит уже лежащее. Карточка минимума меняет только условие успеха.</p>
+  </header>
+  <section class="sharing-table" aria-labelledby="table-title">
+    <div class="table-inner">
+      <div class="table-head"><h2 id="table-title">Стол</h2><p class="status" id="status"></p></div>
+      <div class="goal" id="goal"><span class="goal-mark" aria-hidden="true">★</span><p class="goal-copy" id="goal-copy"></p></div>
+      <div class="stats" aria-label="Счёт">
+        <div class="stat"><span class="stat-name">Печенье</span><strong class="stat-value" id="total">12</strong></div>
+        <div class="stat"><span class="stat-name">Тарелки</span><strong class="stat-value" id="plates">3</strong></div>
+        <div class="stat"><span class="stat-name">На тарелке</span><strong class="stat-value" id="each">4</strong></div>
+        <div class="stat"><span class="stat-name">Остаток</span><strong class="stat-value" id="remainder">0</strong></div>
+        <div class="stat"><span class="stat-name">Пачка</span><strong class="stat-value" id="pack-stat">4</strong></div>
+      </div>
+      <div class="chooser">
+        <fieldset><legend>Пачка</legend>
+          <label><input type="radio" name="pack" value="3"> 3</label>
+          <label><input type="radio" name="pack" value="4" checked> 4</label>
+          <label><input type="radio" name="pack" value="6"> 6</label>
+        </fieldset>
+        <fieldset><legend>Минимум на тарелке</legend>
+          <label><input type="radio" name="min" value="4"> 4</label>
+          <label><input type="radio" name="min" value="6" checked> 6</label>
+          <label><input type="radio" name="min" value="8"> 8</label>
+        </fieldset>
+      </div>
+      <div class="scene" id="scene" aria-label="Тарелки и блюдо для остатка"></div>
+      <p class="scale-note" id="scale-note" hidden>На тарелке нарисовано только первые 8 печений; число под ней точное.</p>
+      <div class="under-scene">
+        <button class="secondary" type="button" id="add-plate">Поставить тарелку</button>
+        <button class="secondary" type="button" id="remove-plate">Убрать тарелку</button>
+        <button class="secondary" type="button" id="undo" disabled>Отменить последнее действие</button>
+        <p class="action-help">Отмена возвращает всю предыдущую сцену: запас, число тарелок, размер пачки и минимум.</p>
+      </div>
+      <details><summary>Как считается</summary><p class="math" id="math"></p></details>
+    </div>
+  </section>
+  <p class="colophon">CC0. Визуал — тот же стол, что cookies v3. Координация daedalus-protocore, тред 6e31ab8c. Ноль тарелок недоступен.</p>
+  <p class="live" id="announcer" aria-live="polite" aria-atomic="true"></p>
+</main>
+<script>
+(() => {
+  const NAMES = ['Аня','Боря','Кира','Дина','Егор','Фира','Гера','Ира'];
+  const MAX_N = 8, MAX_DRAWN = 8;
+  const state = { S:12, N:3, pack:4, min:6 };
+  const history = [];
+  const byId = id => document.getElementById(id);
+  const snap = () => ({ S:state.S, N:state.N, pack:state.pack, min:state.min });
+  const qOf = s => Math.trunc(s.S / s.N);
+  const rOf = s => s.S - qOf(s) * s.N;
+  const okOf = s => qOf(s) >= s.min && rOf(s) === 0;
+  const wordCookies = n => {
+    const a = n % 10, b = n % 100;
+    if (a === 1 && b !== 11) return n + ' печенье';
+    if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return n + ' печенья';
+    return n + ' печений';
+  };
+  const wordPlates = n => {
+    const a = n % 10, b = n % 100;
+    if (a === 1 && b !== 11) return n + ' тарелка';
+    if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return n + ' тарелки';
+    return n + ' тарелок';
+  };
+  const cookie = isNew => {
+    const el = document.createElement('span');
+    el.className = 'cookie' + (isNew ? ' new-cookie' : '');
+    el.setAttribute('aria-hidden', 'true');
+    return el;
+  };
+  const fill = (el, count, isNew) => {
+    el.replaceChildren();
+    if (!count) {
+      const note = document.createElement('span');
+      note.className = 'empty-note';
+      note.textContent = 'пусто';
+      el.append(note);
+      return;
+    }
+    for (let i = 0; i < Math.min(count, MAX_DRAWN); i += 1) el.append(cookie(isNew));
+  };
+  const push = () => { history.push(snap()); };
+  const render = (announce) => {
+    const q = qOf(state), r = rOf(state), ok = okOf(state);
+    byId('total').textContent = String(state.S);
+    byId('plates').textContent = String(state.N);
+    byId('each').textContent = String(q);
+    byId('remainder').textContent = String(r);
+    byId('pack-stat').textContent = String(state.pack);
+    document.querySelectorAll('input[name="pack"]').forEach(i => { i.checked = Number(i.value) === state.pack; });
+    document.querySelectorAll('input[name="min"]').forEach(i => { i.checked = Number(i.value) === state.min; });
+    const scene = byId('scene');
+    scene.replaceChildren();
+    const packZone = document.createElement('div');
+    packZone.className = 'pack-zone';
+    packZone.innerHTML = '<span class="pack-label">Действие</span>';
+    const sleeve = document.createElement('button');
+    sleeve.type = 'button';
+    sleeve.className = 'pack-sleeve';
+    sleeve.id = 'add';
+    sleeve.setAttribute('aria-label', 'Добавить пачку из ' + state.pack);
+    for (let i = 0; i < Math.min(state.pack, 6); i += 1) sleeve.append(cookie(false));
+    const cap = document.createElement('p');
+    cap.className = 'pack-caption';
+    cap.innerHTML = '<strong>Нажмите на пачку:</strong> добавить ' + state.pack;
+    packZone.append(sleeve, cap);
+    scene.append(packZone);
+    for (let i = 0; i < state.N; i += 1) {
+      const wrap = document.createElement('div');
+      wrap.className = 'serving';
+      const name = NAMES[i];
+      wrap.innerHTML = '<span class="serving-name">Тарелка ' + name + '</span>';
+      const plate = document.createElement('div');
+      plate.className = 'plate';
+      plate.setAttribute('aria-label', 'У ' + name + ' ' + wordCookies(q));
+      fill(plate, q, announce);
+      const count = document.createElement('span');
+      count.className = 'serving-count';
+      count.innerHTML = '<strong>' + q + '</strong> ' + wordCookies(q).split(' ').slice(1).join(' ');
+      wrap.append(plate, count);
+      scene.append(wrap);
+    }
+    const leftover = document.createElement('div');
+    leftover.className = 'serving leftover';
+    leftover.innerHTML = '<span class="serving-name">Блюдо для остатка</span>';
+    const dish = document.createElement('div');
+    dish.className = 'plate dish';
+    dish.setAttribute('aria-label', r ? 'Остаток: ' + wordCookies(r) : 'Остаток: нет');
+    fill(dish, r, announce);
+    const lcopy = document.createElement('span');
+    lcopy.className = 'serving-count';
+    lcopy.textContent = r ? wordCookies(r) + ' в остатке' : 'остатка нет';
+    leftover.append(dish, lcopy);
+    scene.append(leftover);
+    sleeve.addEventListener('click', () => { push(); state.S += state.pack; render(true); });
+    byId('remove-plate').disabled = state.N <= 1;
+    byId('add-plate').disabled = state.N >= MAX_N;
+    byId('undo').disabled = history.length === 0;
+    byId('scale-note').hidden = q <= MAX_DRAWN;
+    byId('goal').classList.toggle('is-met', ok);
+    byId('goal-copy').innerHTML = ok
+      ? '<strong>Задача выполнена!</strong> Каждому не меньше ' + state.min + ', остатка 0.'
+      : '<strong>Задача:</strong> каждому не меньше ' + state.min + ' и остатка 0.';
+    let status;
+    if (ok) status = 'Готово: ' + wordPlates(state.N) + ', по ' + q + ', остатка нет.';
+    else if (r) status = 'У каждого по ' + q + ', ' + wordCookies(r) + ' на блюде.';
+    else status = 'У каждого по ' + q + ' — нужно ещё по ' + Math.max(0, state.min - q) + '.';
+    byId('status').textContent = status;
+    byId('math').innerHTML = 'Формула: <code>' + state.S + ' = ' + state.N + ' × ' + q + ' + ' + r + '</code>. Успех: q ≥ min и r = 0. CC0.';
+    if (announce) byId('announcer').textContent = wordCookies(state.S) + '. ' + status;
+  };
+  byId('add-plate').addEventListener('click', () => { if (state.N >= MAX_N) return; push(); state.N += 1; render(true); });
+  byId('remove-plate').addEventListener('click', () => { if (state.N <= 1) return; push(); state.N -= 1; render(true); });
+  byId('undo').addEventListener('click', () => { if (!history.length) return; Object.assign(state, history.pop()); render(true); });
+  document.querySelectorAll('input[name="pack"]').forEach(i => i.addEventListener('change', () => { push(); state.pack = Number(i.value); render(true); }));
+  document.querySelectorAll('input[name="min"]').forEach(i => i.addEventListener('change', () => { push(); state.min = Number(i.value); render(true); }));
+  render(false);
+})();
+</script>
+</body>
+</html>
