@@ -100,7 +100,19 @@
           <label><input type="radio" name="min" value="8"> 8</label>
         </fieldset>
       </div>
-      <div class="scene" id="scene" aria-label="Тарелки и блюдо для остатка"></div>
+      <div class="scene" id="scene" aria-label="Тарелки и блюдо для остатка">
+        <div class="pack-zone" id="pack-zone">
+          <span class="pack-label">Действие</span>
+          <button class="pack-sleeve" type="button" id="add" aria-label="Добавить пачку из 4">
+            <span class="cookie" aria-hidden="true"></span>
+            <span class="cookie" aria-hidden="true"></span>
+            <span class="cookie" aria-hidden="true"></span>
+            <span class="cookie" aria-hidden="true"></span>
+          </button>
+          <p class="pack-caption" id="pack-caption"><strong>Нажмите на пачку:</strong> добавить 4</p>
+        </div>
+        <div id="plates-row" class="scene" style="display:contents"></div>
+      </div>
       <p class="scale-note" id="scale-note" hidden>На тарелке нарисовано только первые 8 печений; число под ней точное.</p>
       <div class="under-scene">
         <button class="secondary" type="button" id="add-plate">Поставить тарелку</button>
@@ -164,22 +176,14 @@
     byId('pack-stat').textContent = String(state.pack);
     document.querySelectorAll('input[name="pack"]').forEach(i => { i.checked = Number(i.value) === state.pack; });
     document.querySelectorAll('input[name="min"]').forEach(i => { i.checked = Number(i.value) === state.min; });
-    const scene = byId('scene');
-    scene.replaceChildren();
-    const packZone = document.createElement('div');
-    packZone.className = 'pack-zone';
-    packZone.innerHTML = '<span class="pack-label">Действие</span>';
-    const sleeve = document.createElement('button');
-    sleeve.type = 'button';
-    sleeve.className = 'pack-sleeve';
-    sleeve.id = 'add';
+    const sleeve = byId('add');
+    const keepFocus = document.activeElement === sleeve;
     sleeve.setAttribute('aria-label', 'Добавить пачку из ' + state.pack);
+    sleeve.replaceChildren();
     for (let i = 0; i < Math.min(state.pack, 6); i += 1) sleeve.append(cookie(false));
-    const cap = document.createElement('p');
-    cap.className = 'pack-caption';
-    cap.innerHTML = '<strong>Нажмите на пачку:</strong> добавить ' + state.pack;
-    packZone.append(sleeve, cap);
-    scene.append(packZone);
+    byId('pack-caption').innerHTML = '<strong>Нажмите на пачку:</strong> добавить ' + state.pack;
+    const row = byId('plates-row');
+    row.replaceChildren();
     for (let i = 0; i < state.N; i += 1) {
       const wrap = document.createElement('div');
       wrap.className = 'serving';
@@ -193,7 +197,7 @@
       count.className = 'serving-count';
       count.innerHTML = '<strong>' + q + '</strong> ' + wordCookies(q).split(' ').slice(1).join(' ');
       wrap.append(plate, count);
-      scene.append(wrap);
+      row.append(wrap);
     }
     const leftover = document.createElement('div');
     leftover.className = 'serving leftover';
@@ -206,8 +210,8 @@
     lcopy.className = 'serving-count';
     lcopy.textContent = r ? wordCookies(r) + ' в остатке' : 'остатка нет';
     leftover.append(dish, lcopy);
-    scene.append(leftover);
-    sleeve.addEventListener('click', () => { push(); state.S += state.pack; render(true); });
+    row.append(leftover);
+    if (keepFocus) sleeve.focus();
     byId('remove-plate').disabled = state.N <= 1;
     byId('add-plate').disabled = state.N >= MAX_N;
     byId('undo').disabled = history.length === 0;
@@ -224,6 +228,7 @@
     byId('math').innerHTML = 'Формула: <code>' + state.S + ' = ' + state.N + ' × ' + q + ' + ' + r + '</code>. Успех: q ≥ min и r = 0. CC0.';
     if (announce) byId('announcer').textContent = wordCookies(state.S) + '. ' + status;
   };
+  byId('add').addEventListener('click', () => { push(); state.S += state.pack; render(true); });
   byId('add-plate').addEventListener('click', () => { if (state.N >= MAX_N) return; push(); state.N += 1; render(true); });
   byId('remove-plate').addEventListener('click', () => { if (state.N <= 1) return; push(); state.N -= 1; render(true); });
   byId('undo').addEventListener('click', () => { if (!history.length) return; Object.assign(state, history.pop()); render(true); });

@@ -35,6 +35,17 @@ def main() -> None:
         page.get_by_role("button", name="Отменить последнее действие").click()
         assert "выполнена" in page.locator("#goal-copy").inner_text()
         assert page.locator("#total").inner_text() == "24"
+        # iohan #29367: Enter twice without locator.press re-focusing the button.
+        page.goto(url)
+        page.wait_for_load_state("networkidle")
+        page.locator('input[name="pack"][value="6"]').click()
+        sleeve = page.locator("#add")
+        sleeve.focus()
+        page.keyboard.press("Enter")
+        assert page.locator("#total").inner_text() == "18"
+        assert page.evaluate("document.activeElement && document.activeElement.id") == "add"
+        page.keyboard.press("Enter")
+        assert page.locator("#total").inner_text() == "24"
         page.screenshot(path=str(SHOT), full_page=True)
         browser.close()
     print("control scenario PASS", SHOT)
