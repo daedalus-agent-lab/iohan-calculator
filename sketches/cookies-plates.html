@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Эскиз: тарелки, пачки 3/4/6 и карточка минимума 4/6/8. CC0.">
-<title>Тарелки и пачки</title>
+<meta name="description" content="Сколько печенья докупить к приходу гостей: выбирайте гостей, порцию и размер пачки, затем собирайте покупку. CC0.">
+<title>Печенье к приходу гостей</title>
 <style>
   :root { --ink:#20233b; --cream:#fff6e4; --paper:#fffdf6; --cloth:#f5d46e; --cloth-light:#ffe692; --berry:#c94b64; --berry-dark:#8e2942; --sky:#51bbd2; --sky-light:#d8f5fa; --leaf:#39875f; --cookie:#d98243; --cookie-light:#f7b45d; --chip:#693f2d; --line:3px solid var(--ink); --shadow:5px 5px 0 var(--ink); }
   * { box-sizing:border-box; }
@@ -36,6 +36,9 @@
   .chooser fieldset { margin:0; padding:10px 12px; border:var(--line); border-radius:15px; background:var(--paper); box-shadow:3px 3px 0 rgba(32,35,59,.35); }
   .chooser legend { padding:0 6px; font-weight:900; font-size:.85rem; }
   .chooser label { display:inline-flex; align-items:center; gap:6px; margin-right:10px; font:800 .9rem/1.2 system-ui,sans-serif; cursor:pointer; }
+  .purchase-list { position:relative; margin:0 0 18px; padding:12px 14px; border:var(--line); border-radius:15px; background:#fff2c9; box-shadow:3px 3px 0 rgba(32,35,59,.35); }
+  .purchase-title { display:block; font-size:.81rem; font-weight:900; }
+  .purchase-copy { display:block; margin-top:4px; font:800 .96rem/1.25 system-ui,sans-serif; }
   .scene { position:relative; display:flex; flex-wrap:wrap; align-items:end; gap:clamp(12px,2vw,22px); }
   .pack-zone { align-self:center; }
   .pack-label { display:block; margin-bottom:8px; font-size:.82rem; font-weight:900; }
@@ -73,52 +76,53 @@
 <body>
 <main class="page" id="page">
   <header class="masthead">
-    <p class="kicker">Эскиз тарелок</p>
-    <h1>Тарелки и пачки</h1>
-    <p class="intro">Пачка меняет только будущие добавления. Новая тарелка делит уже лежащее. Карточка минимума меняет только условие успеха.</p>
+    <p class="kicker">Покупка к приходу гостей</p>
+    <h1>Сколько печенья докупить?</h1>
+    <p class="intro">Сколько печенья докупить к приходу гостей? У вас уже есть 12 печений. Выберите число гостей, сколько нужно каждому и размер пачки в магазине. Добавляйте пачки к покупке, чтобы всем хватило, поровну и без остатка.</p>
   </header>
   <section class="sharing-table" aria-labelledby="table-title">
     <div class="table-inner">
       <div class="table-head"><h2 id="table-title">Стол</h2><p class="status" id="status"></p></div>
       <div class="goal" id="goal"><span class="goal-mark" aria-hidden="true">★</span><p class="goal-copy" id="goal-copy"></p></div>
       <div class="stats" aria-label="Счёт">
-        <div class="stat"><span class="stat-name">Печенье</span><strong class="stat-value" id="total">12</strong></div>
-        <div class="stat"><span class="stat-name">Тарелки</span><strong class="stat-value" id="plates">3</strong></div>
-        <div class="stat"><span class="stat-name">На тарелке</span><strong class="stat-value" id="each">4</strong></div>
+        <div class="stat"><span class="stat-name">Всего печенья</span><strong class="stat-value" id="total">12</strong></div>
+        <div class="stat"><span class="stat-name">Гостей</span><strong class="stat-value" id="plates">3</strong></div>
+        <div class="stat"><span class="stat-name">Каждому</span><strong class="stat-value" id="each">4</strong></div>
         <div class="stat"><span class="stat-name">Остаток</span><strong class="stat-value" id="remainder">0</strong></div>
-        <div class="stat"><span class="stat-name">Пачка</span><strong class="stat-value" id="pack-stat">4</strong></div>
+        <div class="stat"><span class="stat-name">Следующая пачка</span><strong class="stat-value" id="pack-stat">4</strong></div>
       </div>
       <div class="chooser">
-        <fieldset><legend>Пачка</legend>
+        <fieldset><legend>Размер следующей пачки</legend>
           <label><input type="radio" name="pack" value="3"> 3</label>
           <label><input type="radio" name="pack" value="4" checked> 4</label>
           <label><input type="radio" name="pack" value="6"> 6</label>
         </fieldset>
-        <fieldset><legend>Минимум на тарелке</legend>
+        <fieldset><legend>Нужно каждому</legend>
           <label><input type="radio" name="min" value="4"> 4</label>
           <label><input type="radio" name="min" value="6" checked> 6</label>
           <label><input type="radio" name="min" value="8"> 8</label>
         </fieldset>
       </div>
+      <div class="purchase-list" aria-live="polite"><span class="purchase-title">Добавлено к покупке</span><span class="purchase-copy" id="purchases">Пока ничего</span></div>
       <div class="scene" id="scene" aria-label="Тарелки и блюдо для остатка">
         <div class="pack-zone" id="pack-zone">
-          <span class="pack-label">Действие</span>
+          <span class="pack-label">Добавить к покупке</span>
           <button class="pack-sleeve" type="button" id="add" aria-label="Добавить пачку из 4">
             <span class="cookie" aria-hidden="true"></span>
             <span class="cookie" aria-hidden="true"></span>
             <span class="cookie" aria-hidden="true"></span>
             <span class="cookie" aria-hidden="true"></span>
           </button>
-          <p class="pack-caption" id="pack-caption"><strong>Нажмите на пачку:</strong> добавить 4</p>
+          <p class="pack-caption" id="pack-caption"><strong>Нажмите на пачку:</strong> добавить к покупке 4 печенья</p>
         </div>
         <div id="plates-row" class="scene" style="display:contents"></div>
       </div>
       <p class="scale-note" id="scale-note" hidden>На тарелке нарисовано только первые 8 печений; число под ней точное.</p>
       <div class="under-scene">
-        <button class="secondary" type="button" id="add-plate">Поставить тарелку</button>
-        <button class="secondary" type="button" id="remove-plate">Убрать тарелку</button>
+        <button class="secondary" type="button" id="add-plate">Добавить гостя</button>
+        <button class="secondary" type="button" id="remove-plate">Убрать гостя</button>
         <button class="secondary" type="button" id="undo" disabled>Отменить последнее действие</button>
-        <p class="action-help">Отмена возвращает всю предыдущую сцену: запас, число тарелок, размер пачки и минимум.</p>
+        <p class="action-help">Смена гостей или порции не убирает добавленные пачки. Отмена возвращает предыдущее состояние покупки.</p>
       </div>
       <details><summary>Как считается</summary><p class="math" id="math"></p></details>
     </div>
@@ -130,12 +134,14 @@
 (() => {
   const NAMES = ['Аня','Боря','Кира','Дина','Егор','Фира','Гера','Ира'];
   const MAX_N = 8, MAX_DRAWN = 8;
-  const state = { S:12, N:3, pack:4, min:6 };
+  const INITIAL_COOKIES = 12;
+  const state = { purchases:[], N:3, pack:4, min:6 };
   const history = [];
   const byId = id => document.getElementById(id);
-  const snap = () => ({ S:state.S, N:state.N, pack:state.pack, min:state.min });
-  const qOf = s => Math.trunc(s.S / s.N);
-  const rOf = s => s.S - qOf(s) * s.N;
+  const totalOf = s => INITIAL_COOKIES + s.purchases.reduce((sum, size) => sum + size, 0);
+  const snap = () => ({ purchases:[...state.purchases], N:state.N, pack:state.pack, min:state.min });
+  const qOf = s => Math.trunc(totalOf(s) / s.N);
+  const rOf = s => totalOf(s) - qOf(s) * s.N;
   const okOf = s => qOf(s) >= s.min && rOf(s) === 0;
   const wordCookies = n => {
     const a = n % 10, b = n % 100;
@@ -168,8 +174,8 @@
   };
   const push = () => { history.push(snap()); };
   const render = (announce) => {
-    const q = qOf(state), r = rOf(state), ok = okOf(state);
-    byId('total').textContent = String(state.S);
+    const S = totalOf(state), q = qOf(state), r = rOf(state), ok = okOf(state);
+    byId('total').textContent = String(S);
     byId('plates').textContent = String(state.N);
     byId('each').textContent = String(q);
     byId('remainder').textContent = String(r);
@@ -181,14 +187,17 @@
     sleeve.setAttribute('aria-label', 'Добавить пачку из ' + state.pack);
     sleeve.replaceChildren();
     for (let i = 0; i < Math.min(state.pack, 6); i += 1) sleeve.append(cookie(false));
-    byId('pack-caption').innerHTML = '<strong>Нажмите на пачку:</strong> добавить ' + state.pack;
+    byId('pack-caption').innerHTML = '<strong>Нажмите на пачку:</strong> добавить к покупке ' + wordCookies(state.pack);
+    byId('purchases').textContent = state.purchases.length
+      ? state.purchases.map(wordCookies).join(' + ') + ' — куплено ' + wordCookies(S - INITIAL_COOKIES)
+      : 'Пока ничего — куплено 0 печений';
     const row = byId('plates-row');
     row.replaceChildren();
     for (let i = 0; i < state.N; i += 1) {
       const wrap = document.createElement('div');
       wrap.className = 'serving';
       const name = NAMES[i];
-      wrap.innerHTML = '<span class="serving-name">Тарелка ' + name + '</span>';
+      wrap.innerHTML = '<span class="serving-name">Гость ' + name + '</span>';
       const plate = document.createElement('div');
       plate.className = 'plate';
       plate.setAttribute('aria-label', 'У ' + name + ' ' + wordCookies(q));
@@ -218,17 +227,17 @@
     byId('scale-note').hidden = q <= MAX_DRAWN;
     byId('goal').classList.toggle('is-met', ok);
     byId('goal-copy').innerHTML = ok
-      ? '<strong>Задача выполнена!</strong> Каждому не меньше ' + state.min + ', остатка 0.'
-      : '<strong>Задача:</strong> каждому не меньше ' + state.min + ' и остатка 0.';
+      ? '<strong>Гостям хватит!</strong> Каждому по ' + q + ', остатка нет.'
+      : '<strong>Проверьте покупку:</strong> каждому нужно не меньше ' + state.min + ' и остатка 0.';
     let status;
-    if (ok) status = 'Готово: ' + wordPlates(state.N) + ', по ' + q + ', остатка нет.';
-    else if (r) status = 'У каждого по ' + q + ', ' + wordCookies(r) + ' на блюде.';
-    else status = 'У каждого по ' + q + ' — нужно ещё по ' + Math.max(0, state.min - q) + '.';
+    if (ok) status = 'Готово: ' + wordPlates(state.N) + ', каждому по ' + q + ', остатка нет.';
+    else if (r) status = 'Каждому по ' + q + ', ' + wordCookies(r) + ' останется.';
+    else status = 'Каждому по ' + q + '; до ' + state.min + ' не хватает по ' + Math.max(0, state.min - q) + '.';
     byId('status').textContent = status;
-    byId('math').innerHTML = 'Формула: <code>' + state.S + ' = ' + state.N + ' × ' + q + ' + ' + r + '</code>. Успех: q ≥ min и r = 0. CC0.';
-    if (announce) byId('announcer').textContent = wordCookies(state.S) + '. ' + status;
+    byId('math').innerHTML = 'Всего: <code>' + S + ' = ' + state.N + ' × ' + q + ' + ' + r + '</code>. В запасе 12, в покупке ' + wordCookies(S - INITIAL_COOKIES) + '. CC0.';
+    if (announce) byId('announcer').textContent = wordCookies(S) + '. ' + status;
   };
-  byId('add').addEventListener('click', () => { push(); state.S += state.pack; render(true); });
+  byId('add').addEventListener('click', () => { push(); state.purchases.push(state.pack); render(true); });
   byId('add-plate').addEventListener('click', () => { if (state.N >= MAX_N) return; push(); state.N += 1; render(true); });
   byId('remove-plate').addEventListener('click', () => { if (state.N <= 1) return; push(); state.N -= 1; render(true); });
   byId('undo').addEventListener('click', () => { if (!history.length) return; Object.assign(state, history.pop()); render(true); });
