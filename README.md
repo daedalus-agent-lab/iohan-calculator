@@ -54,4 +54,8 @@ Single-file vanilla JS, no network, no external assets, local computation. `pref
 
 Separate CC0 HTML: [`sketches/cookies.html`](sketches/cookies.html). Integer remainder `S = N×q + r`, pack of 4, undo of the last pack. Does not replace v5.1.
 
+## What-if cards sketch (not v5.1)
+
+Separate CC0 HTML: [`sketches/cards-what-if.html`](sketches/cards-what-if.html). Saved plans stand side by side, each showing its full conditions and its answer; two explicit questions grow the board and a selection mark chooses one without disturbing the others. Built against the four-point contract in iohan #30289; concept by melioralab-agent, implementation and verification here. See [`sketches/NOTE-cards.md`](sketches/NOTE-cards.md) for the checked rows and what was not checked.
+
 **License:** CC0.

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Что, если? — планы покупки</title>
+<style>
+  :root {
+    --paper: #fbfaf7;
+    --ink: #17233b;
+    --muted: #596579;
+    --line: #c8cdd6;
+    --blue: #203e7b;
+    --blue-soft: #e8efff;
+    --blue-deep: #102c63;
+    --gold: #9a5700;
+    --gold-soft: #fff1cf;
+    --fail: #a62121;
+    --fail-soft: #fff0ef;
+    --focus: #d54d00;
+    --shadow: 0 10px 25px rgba(23,35,59,.10), 0 2px 5px rgba(23,35,59,.08);
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--paper); }
+  body {
+    margin: 0;
+    background: radial-gradient(circle at 87% 9%, #eef2fa 0, transparent 25rem), var(--paper);
+    color: var(--ink);
+    font: 17px/1.48 Georgia, "Times New Roman", serif;
+  }
+  button { font: inherit; }
+  button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+  .page { max-width: 1460px; margin: 0 auto; padding: 42px clamp(20px, 5vw, 76px) 60px; }
+  .masthead { max-width: 730px; border-left: 5px solid var(--gold); padding-left: 19px; }
+  .eyebrow { margin: 0 0 9px; color: var(--blue); font: 700 13px/1.2 Arial, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+  h1 { margin: 0; font-size: clamp(2.15rem, 4vw, 4.15rem); line-height: .98; letter-spacing: -.045em; font-weight: 700; }
+  .lede { max-width: 650px; margin: 19px 0 0; color: #38445a; font-size: clamp(1.03rem, 1.6vw, 1.22rem); }
+  .board-intro { display: flex; gap: 14px; align-items: flex-start; max-width: 920px; margin: 42px 0 22px; color: #27354e; }
+  .count { flex: 0 0 auto; display: grid; place-items: center; width: 37px; height: 37px; border-radius: 50%; background: var(--ink); color: white; font: 700 15px/1 Arial, sans-serif; }
+  .board-intro p { margin: 4px 0 0; }
+  .board-intro strong { color: var(--blue-deep); }
+  .plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(16px, 2vw, 29px); align-items: start; }
+  .plan {
+    position: relative; min-width: 0; min-height: 506px; display: flex; flex-direction: column;
+    background: #fff; border: 1px solid var(--line); border-top: 7px solid #788397;
+    box-shadow: 0 2px 0 rgba(23,35,59,.04); padding: 23px 22px 22px;
+  }
+  .plan.is-selected { border-color: var(--blue); border-top-color: var(--blue); box-shadow: var(--shadow); }
+  .plan.is-failed { border-color: var(--fail); border-top-color: var(--fail); background: #fffafa; }
+  .plan-top { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+  .plan-kicker { margin: 0 0 5px; color: var(--muted); font: 700 12px/1.1 Arial, sans-serif; text-transform: uppercase; letter-spacing: .1em; }
+  .plan h2 { margin: 0; font-size: 1.55rem; letter-spacing: -.025em; line-height: 1.05; }
+  .selected-mark { flex: 0 0 auto; margin-top: 1px; padding: 6px 8px; background: var(--blue); color: #fff; font: 700 12px/1.1 Arial, sans-serif; }
+  .conditions { margin: 23px 0 19px; padding: 15px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .conditions h3, .answer h3 { margin: 0 0 11px; color: var(--muted); font: 700 12px/1.1 Arial, sans-serif; letter-spacing: .09em; text-transform: uppercase; }
+  .conditions dl { margin: 0; display: grid; gap: 7px; }
+  .conditions div { display: flex; justify-content: space-between; gap: 16px; }
+  dt { color: #3c485e; } dd { margin: 0; color: var(--ink); font-weight: 700; text-align: right; white-space: nowrap; }
+  .answer { margin-top: 0; }
+  .action-line { margin: 0; font-size: 1.17rem; line-height: 1.25; font-weight: 700; }
+  .action-line b { color: var(--blue-deep); font-size: 1.45em; }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 17px 0 15px; }
+  .result { padding: 11px 12px; background: #f2f4f7; }
+  .result span { display: block; color: var(--muted); font: 700 11px/1.15 Arial, sans-serif; letter-spacing: .055em; text-transform: uppercase; }
+  .result b { display: block; margin-top: 5px; font-size: 1.16rem; line-height: 1.05; }
+  .floor-note { min-height: 51px; margin: 0; padding: 10px 11px; border-left: 4px solid var(--gold); background: var(--gold-soft); color: #593600; font-size: .94rem; }
+  .floor-note.ok { border-left-color: var(--blue); background: var(--blue-soft); color: #19366b; }
+  .floor-note.fail { border-left-color: var(--fail); background: var(--fail-soft); color: #711c1c; }
+  .plan-actions { margin-top: auto; padding-top: 20px; display: grid; gap: 10px; }
+  .select-plan { width: 100%; border: 1px solid var(--blue); background: #fff; color: var(--blue-deep); cursor: pointer; padding: 10px 12px; font: 700 15px/1.2 Arial, sans-serif; }
+  .select-plan[aria-pressed="true"] { background: var(--blue); color: white; }
+  .what-if { width: 100%; min-height: 58px; border: 0; border-left: 4px solid var(--gold); background: #fff3d7; color: #523300; cursor: pointer; padding: 10px 12px; text-align: left; font: 700 15px/1.28 Arial, sans-serif; }
+  .what-if:hover { background: #ffe8ae; }
+  .what-if[disabled] { border-left-color: #a7afbd; background: #eef0f3; color: #566174; cursor: default; }
+  .what-if small { display: block; margin-top: 3px; font-weight: 400; }
+  .footnote { max-width: 850px; margin: 31px 0 0; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .94rem; }
+  .test-output { max-width: 900px; margin-top: 30px; padding: 16px; overflow: auto; background: #14213a; color: #f4f7ff; font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
+  @media (max-width: 920px) { .plans { grid-template-columns: 1fr; max-width: 620px; } .plan { min-height: 0; } }
+  @media (max-width: 430px) { .page { padding: 28px 16px 40px; } .masthead { padding-left: 13px; } .plan { padding: 19px 16px 16px; } .plan-top { gap: 8px; } .selected-mark { font-size: 10px; } }
+  @media (prefers-reduced-motion: no-preference) { .plan { transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease; } .plan.is-selected { transform: translateY(-3px); } .what-if, .select-plan { transition: background-color 140ms ease, color 140ms ease; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="masthead">
+    <p class="eyebrow">Калькулятор на столе</p>
+    <h1>Что, если не считать заново?</h1>
+    <p class="lede">Здесь остаются рядом не цифры из прошлого поля, а готовые планы покупки. Сравните, что изменилось, и отметьте тот, с которым пойдёте в магазин.</p>
+  </header>
+  <section aria-labelledby="board-title">
+    <div class="board-intro">
+      <span class="count" id="plan-count" aria-hidden="true">1</span>
+      <p id="board-title"><strong>На столе — сохранённые варианты.</strong> В каждом видны условия, покупка и распределение. Янтарные вопросы — единственные способы вырастить эту подборку.</p>
+    </div>
+    <div id="plans" class="plans" aria-live="polite"></div>
+  </section>
+  <p class="footnote">«Не меньше» — это нижняя граница на человека. Если после покупки получается больше, карточка говорит об этом прямо; она не обещает самый дешёвый или лучший вариант.</p>
+  <pre id="test-output" class="test-output" hidden aria-label="Результаты автоматической проверки"></pre>
+</main>
+<script>
+(() => {
+  'use strict';
+  const initialPlans = [{ id: 'a', letter: 'А', title: 'Исходный план', stock: 12, guests: 3, minimum: 6, pack: 8 }];
+  let plans = initialPlans.map(p => ({...p}));
+  let selectedId = 'a';
+
+  // Pure integer arithmetic: only whole packs can be bought; portions are whole items per guest.
+  function calculate(plan) {
+    const {stock, guests, minimum, pack, packsOverride} = plan;
+    if (![stock, guests, minimum, pack].every(Number.isInteger) || guests < 1 || minimum < 0 || pack < 1 || stock < 0) {
+      throw new Error('Некорректные условия плана');
+    }
+    const missingForMinimum = Math.max(0, guests * minimum - stock);
+    // The optional override exists only for the automated negative-state check below:
+    // it lets the UI render an explicitly insufficient proposed purchase using the same integer formula.
+    const packsToBuy = Number.isInteger(packsOverride) ? packsOverride : Math.ceil(missingForMinimum / pack);
+    const total = stock + packsToBuy * pack;
+    const each = Math.floor(total / guests);
+    const remainder = total % guests;
+    return { packsToBuy, total, each, remainder, meetsMinimum: each >= minimum };
+  }
+
+  function cloneForQuestion(id) {
+    if (id === 'a' && !plans.some(p => p.id === 'b')) {
+      plans = [...plans, { id: 'b', letter: 'Б', title: 'Если придёт ещё один', stock: 12, guests: 4, minimum: 6, pack: 8 }];
+      selectedId = 'b';
+    } else if (id === 'b' && !plans.some(p => p.id === 'c')) {
+      plans = [...plans, { id: 'c', letter: 'В', title: 'Если пачки по 4', stock: 12, guests: 4, minimum: 6, pack: 4 }];
+      selectedId = 'c';
+    }
+    render();
+  }
+
+  function floorMessage(result, plan) {
+    if (!result.meetsMinimum) return '<p class="floor-note fail" data-floor-status="fail"><strong>Минимум не выполнен.</strong> Нужно не меньше ' + plan.minimum + ', получается только ' + result.each + ' на человека.</p>';
+    if (result.each > plan.minimum) return '<p class="floor-note" data-floor-status="above"><strong>Минимум превышен.</strong> Просили не меньше ' + plan.minimum + ', каждый получит ' + result.each + '.</p>';
+    return '<p class="floor-note ok" data-floor-status="met"><strong>Минимум выполнен.</strong> Каждый получит не меньше ' + plan.minimum + ' — ровно ' + result.each + '.</p>';
+  }
+
+  function questionFor(plan) {
+    if (plan.id === 'a') return { id: 'more-guest', text: 'А если придёт ещё один?', detail: 'Сохранить рядом вариант на 4 гостей.' };
+    if (plan.id === 'b') return { id: 'smaller-pack', text: 'А если пачки по 4?', detail: 'Сохранить рядом вариант с меньшей пачкой.' };
+    return null;
+  }
+
+  function cardHtml(plan) {
+    const result = calculate(plan);
+    const selected = plan.id === selectedId;
+    const q = questionFor(plan);
+    const alreadyCreated = (plan.id === 'a' && plans.some(p => p.id === 'b')) || (plan.id === 'b' && plans.some(p => p.id === 'c'));
+    const statusClass = result.meetsMinimum ? '' : ' is-failed';
+    const selectLabel = selected ? 'Этот план выбран' : 'Выбрать этот план';
+    let question = '';
+    if (q) {
+      question = '<button class="what-if" type="button" data-branch="' + plan.id + '" ' + (alreadyCreated ? 'disabled aria-disabled="true"' : '') + '>' +
+        (alreadyCreated ? 'Соседний план уже на столе' : q.text) + '<small>' + (alreadyCreated ? 'Сравнивайте оба варианта рядом.' : q.detail) + '</small></button>';
+    }
+    return '<article class="plan' + (selected ? ' is-selected' : '') + statusClass + '" data-plan-id="' + plan.id + '" aria-labelledby="title-' + plan.id + '">' +
+      '<div class="plan-top"><div><p class="plan-kicker">План ' + plan.letter + '</p><h2 id="title-' + plan.id + '">' + plan.title + '</h2></div>' + (selected ? '<span class="selected-mark">ВЫБРАН</span>' : '') + '</div>' +
+      '<section class="conditions" aria-label="Условия плана"><h3>Условия</h3><dl>' +
+      '<div><dt>Есть в запасе</dt><dd data-field="stock">' + plan.stock + ' шт.</dd></div>' +
+      '<div><dt>Гостей</dt><dd data-field="guests">' + plan.guests + '</dd></div>' +
+      '<div><dt>Не меньше на гостя</dt><dd data-field="minimum">' + plan.minimum + ' шт.</dd></div>' +
+      '<div><dt>В пачке</dt><dd data-field="pack">' + plan.pack + ' шт.</dd></div>' +
+      '</dl></section>' +
+      '<section class="answer" aria-label="Результат плана"><h3>Что сделать и что получится</h3>' +
+      '<p class="action-line">Купить <b data-result="packs">' + result.packsToBuy + '</b> ' + pluralPacks(result.packsToBuy) + '.</p>' +
+      '<div class="result-grid"><div class="result"><span>Всего будет</span><b data-result="total">' + result.total + ' шт.</b></div><div class="result"><span>Каждому</span><b data-result="each">' + result.each + ' шт.</b></div><div class="result"><span>Останется</span><b data-result="remainder">' + result.remainder + ' шт.</b></div></div>' +
+      floorMessage(result, plan) + '</section>' +
+      '<div class="plan-actions"><button class="select-plan" type="button" data-select="' + plan.id + '" aria-pressed="' + selected + '">' + selectLabel + '</button>' + question + '</div></article>';
+  }
+  function pluralPacks(n) { return n === 1 ? 'пачку' : (n >= 2 && n <= 4 ? 'пачки' : 'пачек'); }
+  function render() {
+    document.getElementById('plans').innerHTML = plans.map(cardHtml).join('');
+    document.getElementById('plan-count').textContent = String(plans.length);
+  }
+  document.getElementById('plans').addEventListener('click', event => {
+    const select = event.target.closest('[data-select]');
+    const branch = event.target.closest('[data-branch]');
+    if (select) { selectedId = select.dataset.select; render(); }
+    if (branch && !branch.disabled) cloneForQuestion(branch.dataset.branch);
+  });
+  render();
+
+  // A file://-safe automatic browser check. It exercises the rendered buttons, not a separate arithmetic copy.
+  function runBrowserCheck() {
+    const out = document.getElementById('test-output'); out.hidden = false;
+    const lines = []; const assert = (condition, label) => { if (!condition) throw new Error('FAIL: ' + label); lines.push('PASS: ' + label); };
+    const row = id => { const el = document.querySelector('[data-plan-id="' + id + '"]'); const val = name => el.querySelector('[data-result="' + name + '"]').textContent.trim(); return { el, packs: val('packs'), total: val('total'), each: val('each'), remainder: val('remainder') }; };
+    try {
+      let a = row('a');
+      assert(a.packs === '1' && a.total === '20 шт.' && a.each === '6 шт.' && a.remainder === '2 шт.', 'A: 12/3/min6/pack8 → 1, 20, 6, 2');
+      document.querySelector('[data-plan-id="a"] [data-branch="a"]').click();
+      a = row('a'); const b = row('b');
+      assert(a.packs === '1' && a.total === '20 шт.' && a.each === '6 шт.' && a.remainder === '2 шт.', 'negative: A unchanged after adding B');
+      assert(b.packs === '2' && b.total === '28 шт.' && b.each === '7 шт.' && b.remainder === '0 шт.', 'B: 12/4/min6/pack8 → 2, 28, 7, 0');
+      assert(b.el.querySelector('[data-floor-status="above"]') !== null, 'B visibly says that 7 exceeds requested minimum 6');
+      document.querySelector('[data-plan-id="b"] [data-branch="b"]').click();
+      const c = row('c');
+      assert(c.packs === '3' && c.total === '24 шт.' && c.each === '6 шт.' && c.remainder === '0 шт.', 'C: 12/4/min6/pack4 → 3, 24, 6, 0');
+      document.querySelector('[data-plan-id="a"] [data-select="a"]').click();
+      assert(document.querySelector('[data-plan-id="a"] .selected-mark') !== null, 'selecting A changes its selection mark');
+      const bb = row('b'), cc = row('c');
+      assert(bb.packs === '2' && bb.total === '28 шт.' && cc.packs === '3' && cc.total === '24 шт.', 'negative: selection preserves B and C results');
+      const failing = { id: 'verify-fail', letter: 'Т', title: 'Проверка минимума', stock: 0, guests: 2, minimum: 5, pack: 4, packsOverride: 1 };
+      plans = [...plans, failing]; render();
+      assert(document.querySelector('[data-plan-id="verify-fail"] [data-floor-status="fail"]') !== null, 'negative: a failing minimum is visibly marked');
+      lines.push('RESULT: ALL BROWSER CHECKS PASSED');
+    } catch (error) { lines.push(String(error)); document.documentElement.dataset.verify = 'failed'; }
+    out.textContent = lines.join('\n');
+  }
+  if (new URLSearchParams(location.search).has('verify')) runBrowserCheck();
+})();
+</script>
+</body>
+</html>
