@@ -1,18 +1,22 @@
-"""Drive the card sketch in a real browser and assert the four contract rows from the DOM.
+"""Drive the card sketch in a real browser and assert the contract rows from the DOM.
 
 The page's own verifier runs its script in a JS VM; this one runs the layout engine, so the numbers
-come off the rendered page and the clicks go through real hit-testing.
+come off the rendered page, the clicks go through real hit-testing, and keyboard focus is observable
+as the browser actually holds it.
+
+Set CARDS_PAGE to check a different file (used to prove the focus checks fail on the previous build).
 """
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-PAGE = Path(__file__).with_name("cards-what-if.html")
-SHOTS = Path(__file__).parent
+PAGE = Path(os.environ.get("CARDS_PAGE", str(Path(__file__).with_name("cards-what-if.html"))))
+SHOTS = Path(os.environ.get("CARDS_SHOTS", str(Path(__file__).parent)))
 CHROME = "/usr/local/bin/chromium"
 
 
@@ -27,6 +31,21 @@ def row(page, plan_id: str) -> dict[str, str]:
         assert digits != "", f"{plan_id}.{name} shows no number: {raw!r}"
         out[name] = digits
     return out
+
+
+def focus_state(page) -> dict[str, object]:
+    """Where the browser really holds focus, described in page terms."""
+    return page.evaluate(
+        """() => {
+             const a = document.activeElement;
+             if (!a) return {tag: 'none', plan: null, select: null};
+             const card = a.closest('[data-plan-id]');
+             return {
+               tag: a.tagName,
+               plan: card ? card.dataset.planId : null,
+               select: a.matches('[data-select]') ? a.dataset.select : null,
+             };
+           }""")
 
 
 def main() -> int:
@@ -46,12 +65,27 @@ def main() -> int:
 
         check("no page errors on load", not errors, "; ".join(errors))
 
+        # The page must say what is being bought and why anyone is counting it.
+        body = page.inner_text("body").lower()
+        check("the visible text names the thing being bought (печенье)", "печен" in body)
+        check("the visible text tells the everyday situation (гости, чай, пачка)",
+              "гост" in body and "чай" in body and "пачк" in body,
+              f"гости={'гост' in body} чай={'чай' in body} пачка={'пачк' in body}")
+        # The cards stack into a single column on a phone, so no string may claim they sit beside
+        # each other, and none may count them ("the second plan") while a third one exists.
+        check("no text claims the plans sit side by side", "рядом" not in body)
+        # The list is rebuilt on every action: making it a live region too would announce all of it
+        # again on top of the focus move, which is the single announcement channel here.
+        live = page.get_attribute("#plans", "aria-live")
+        check("the list is not also a live region (focus is the announcement channel)",
+              live is None, f"aria-live={live!r}")
+
         a = row(page, "a")
         check("step 1 card A: 1 pack, total 20, each 6, remainder 2",
               a == {"packs": "1", "total": "20", "each": "6", "remainder": "2"}, json.dumps(a))
         page.screenshot(path=str(SHOTS / "shot-1440-step1.png"))
 
-        # Step 2: the question on A creates B beside it.
+        # Step 2: the question on A creates B beside it (pointer path).
         page.click('[data-plan-id="a"] [data-branch="a"]')
         page.wait_for_timeout(200)
         b = row(page, "b")
@@ -62,9 +96,13 @@ def main() -> int:
         check("step 2 says the minimum is exceeded, not met exactly",
               page.eval_on_selector('[data-plan-id="b"] [data-floor-status]', "e => e.dataset.floorStatus") == "above"
               and "7" in page.inner_text('[data-plan-id="b"] .floor-note'))
+        focus = focus_state(page)
+        check("step 2 keeps keyboard focus on the card that was just added, not on <body>",
+              focus["plan"] == "b", json.dumps(focus))
 
-        # Step 3: the question on B creates C, keeping B.
-        page.click('[data-plan-id="b"] [data-branch="b"]')
+        # Step 3: the question on B creates C, keeping B — driven by the keyboard.
+        page.focus('[data-plan-id="b"] [data-branch="b"]')
+        page.keyboard.press("Enter")
         page.wait_for_timeout(200)
         c = row(page, "c")
         check("step 3 card C: 3 packs, total 24, each 6, remainder 0",
@@ -72,9 +110,12 @@ def main() -> int:
         check("step 3 keeps card B unchanged", row(page, "b") == b)
         check("all three plans are visible at once", page.locator(".plan").count() == 3,
               str(page.locator(".plan").count()))
+        focus = focus_state(page)
+        check("Enter on the question keeps keyboard focus on the newly added card",
+              focus["plan"] == "c", json.dumps(focus))
         page.screenshot(path=str(SHOTS / "shot-1440-step3.png"), full_page=True)
 
-        # Step 4: selection only marks.
+        # Step 4: selection only marks, and the focus stays on the button that was pressed.
         page.click('[data-plan-id="a"] [data-select="a"]')
         page.wait_for_timeout(200)
         check("step 4 marks the selected plan",
@@ -82,6 +123,20 @@ def main() -> int:
               and page.query_selector_all(".selected-mark").__len__() == 1)
         check("step 4 does not touch the neighbouring numbers",
               row(page, "b") == b and row(page, "c") == c and row(page, "a") == a)
+        focus = focus_state(page)
+        check("step 4 keeps keyboard focus on the button of the plan just chosen",
+              focus["plan"] == "a" and focus["select"] == "a", json.dumps(focus))
+
+        # Step 5: the same through the keyboard, on a different card.
+        page.focus('[data-plan-id="c"] [data-select="c"]')
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(200)
+        check("step 5 Enter selects and marks card C",
+              page.query_selector('[data-plan-id="c"] .selected-mark') is not None
+              and page.query_selector_all(".selected-mark").__len__() == 1)
+        focus = focus_state(page)
+        check("step 5 Enter keeps keyboard focus on the chosen card's own button",
+              focus["plan"] == "c" and focus["select"] == "c", json.dumps(focus))
 
         # Narrow viewport.
         page.set_viewport_size({"width": 360, "height": 780})

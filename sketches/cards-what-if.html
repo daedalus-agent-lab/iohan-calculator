@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>Что, если? — планы покупки</title>
+<title>Печенье к чаю: что, если гостей станет больше? — готовые планы покупки</title>
 <style>
   :root {
     --paper: #fbfaf7;
@@ -46,6 +46,7 @@
     background: #fff; border: 1px solid var(--line); border-top: 7px solid #788397;
     box-shadow: 0 2px 0 rgba(23,35,59,.04); padding: 23px 22px 22px;
   }
+  .plan:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
   .plan.is-selected { border-color: var(--blue); border-top-color: var(--blue); box-shadow: var(--shadow); }
   .plan.is-failed { border-color: var(--fail); border-top-color: var(--fail); background: #fffafa; }
   .plan-top { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
@@ -84,28 +85,41 @@
 <body>
 <main class="page">
   <header class="masthead">
-    <p class="eyebrow">Калькулятор на столе</p>
-    <h1>Что, если не считать заново?</h1>
-    <p class="lede">Здесь остаются рядом не цифры из прошлого поля, а готовые планы покупки. Сравните, что изменилось, и отметьте тот, с которым пойдёте в магазин.</p>
+    <p class="eyebrow">Печенье к чаю</p>
+    <h1>Что, если гостей станет больше?</h1>
+    <p class="lede">Вы ждёте гостей на чай. Дома уже есть 12 печений, и вы хотите положить каждому на тарелку не меньше шести печений; пачка в магазине — восемь печений. Один план покупки вы уже посчитали. А если гостей будет больше или в пачке окажется меньше печенья? Готовые планы лежат на этой странице: сравните, что изменится, и отметьте тот, с которым пойдёте в магазин. Считать заново не нужно.</p>
   </header>
   <section aria-labelledby="board-title">
     <div class="board-intro">
       <span class="count" id="plan-count" aria-hidden="true">1</span>
-      <p id="board-title"><strong>На столе — сохранённые варианты.</strong> В каждом видны условия, покупка и распределение. Янтарные вопросы — единственные способы вырастить эту подборку.</p>
+      <p id="board-title"><strong>На столе — готовые планы покупки печенья.</strong> В каждом видно, сколько печенья уже есть дома, сколько ждёте гостей, сколько печений должно достаться каждому и сколько печений в пачке. Кнопки с вопросами добавляют ещё один план — не пересчитывая тот, что уже лежит.</p>
     </div>
-    <div id="plans" class="plans" aria-live="polite"></div>
+    <!-- The list is replaced wholesale on every action, so it is deliberately NOT a live region:
+         making it one would announce the whole list again on top of the focus move below. Focus is
+         the single announcement channel: the chosen card's button, or the card just added. -->
+    <div id="plans" class="plans"></div>
   </section>
-  <p class="footnote">«Не меньше» — это нижняя граница на человека. Если после покупки получается больше, карточка говорит об этом прямо; она не обещает самый дешёвый или лучший вариант.</p>
+  <p class="footnote">«Не меньше» — это нижняя граница на гостя, а не цель. Если после покупки печений выходит больше, карточка говорит об этом прямо. Она не обещает самую дешёвую покупку и не выбирает за вас лучшую пачку.</p>
   <pre id="test-output" class="test-output" hidden aria-label="Результаты автоматической проверки"></pre>
 </main>
 <script>
 (() => {
   'use strict';
-  const initialPlans = [{ id: 'a', letter: 'А', title: 'Исходный план', stock: 12, guests: 3, minimum: 6, pack: 8 }];
+  const initialPlans = [{ id: 'a', letter: 'А', title: 'Расчёт на 3 гостей', stock: 12, guests: 3, minimum: 6, pack: 8 }];
   let plans = initialPlans.map(p => ({...p}));
   let selectedId = 'a';
 
-  // Pure integer arithmetic: only whole packs can be bought; portions are whole items per guest.
+  // Russian counting form: 1 печенье, 2 печенья, 5 печений.
+  function form(n, one, few, many) {
+    const last = n % 10, lastTwo = n % 100;
+    if (last === 1 && lastTwo !== 11) return one;
+    if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return few;
+    return many;
+  }
+  function cookies(n) { return n + ' ' + form(n, 'печенье', 'печенья', 'печений'); }
+  function packWord(n) { return form(n, 'пачку', 'пачки', 'пачек'); }
+
+  // Pure integer arithmetic: only whole packs can be bought; portions are whole cookies per guest.
   function calculate(plan) {
     const {stock, guests, minimum, pack, packsOverride} = plan;
     if (![stock, guests, minimum, pack].every(Number.isInteger) || guests < 1 || minimum < 0 || pack < 1 || stock < 0) {
@@ -122,25 +136,27 @@
   }
 
   function cloneForQuestion(id) {
+    let createdId = null;
     if (id === 'a' && !plans.some(p => p.id === 'b')) {
-      plans = [...plans, { id: 'b', letter: 'Б', title: 'Если придёт ещё один', stock: 12, guests: 4, minimum: 6, pack: 8 }];
-      selectedId = 'b';
+      plans = [...plans, { id: 'b', letter: 'Б', title: 'Если придёт ещё один гость', stock: 12, guests: 4, minimum: 6, pack: 8 }];
+      createdId = 'b';
     } else if (id === 'b' && !plans.some(p => p.id === 'c')) {
-      plans = [...plans, { id: 'c', letter: 'В', title: 'Если пачки по 4', stock: 12, guests: 4, minimum: 6, pack: 4 }];
-      selectedId = 'c';
+      plans = [...plans, { id: 'c', letter: 'В', title: 'Если пачка окажется меньше', stock: 12, guests: 4, minimum: 6, pack: 4 }];
+      createdId = 'c';
     }
-    render();
+    if (createdId) selectedId = createdId;
+    render(createdId ? { type: 'card', id: createdId } : null);
   }
 
   function floorMessage(result, plan) {
-    if (!result.meetsMinimum) return '<p class="floor-note fail" data-floor-status="fail"><strong>Минимум не выполнен.</strong> Нужно не меньше ' + plan.minimum + ', получается только ' + result.each + ' на человека.</p>';
-    if (result.each > plan.minimum) return '<p class="floor-note" data-floor-status="above"><strong>Минимум превышен.</strong> Просили не меньше ' + plan.minimum + ', каждый получит ' + result.each + '.</p>';
-    return '<p class="floor-note ok" data-floor-status="met"><strong>Минимум выполнен.</strong> Каждый получит не меньше ' + plan.minimum + ' — ровно ' + result.each + '.</p>';
+    if (!result.meetsMinimum) return '<p class="floor-note fail" data-floor-status="fail"><strong>Меньше, чем хотели.</strong> Хотели не меньше ' + cookies(plan.minimum) + ' каждому, а выйдет только ' + result.each + '.</p>';
+    if (result.each > plan.minimum) return '<p class="floor-note" data-floor-status="above"><strong>Выйдет больше, чем просили.</strong> Хотели не меньше ' + cookies(plan.minimum) + ' каждому — достанется ' + result.each + '.</p>';
+    return '<p class="floor-note ok" data-floor-status="met"><strong>Ровно как хотели.</strong> Каждому достанется ' + cookies(result.each) + ' — не меньше, чем просили.</p>';
   }
 
   function questionFor(plan) {
-    if (plan.id === 'a') return { id: 'more-guest', text: 'А если придёт ещё один?', detail: 'Сохранить рядом вариант на 4 гостей.' };
-    if (plan.id === 'b') return { id: 'smaller-pack', text: 'А если пачки по 4?', detail: 'Сохранить рядом вариант с меньшей пачкой.' };
+    if (plan.id === 'a') return { id: 'more-guest', text: 'А если придёт ещё один гость?', detail: 'Добавить план на четырёх гостей.' };
+    if (plan.id === 'b') return { id: 'smaller-pack', text: 'А если в пачке меньше печенья?', detail: 'Добавить план с пачкой по 4 печенья.' };
     return null;
   }
 
@@ -154,31 +170,44 @@
     let question = '';
     if (q) {
       question = '<button class="what-if" type="button" data-branch="' + plan.id + '" ' + (alreadyCreated ? 'disabled aria-disabled="true"' : '') + '>' +
-        (alreadyCreated ? 'Соседний план уже на столе' : q.text) + '<small>' + (alreadyCreated ? 'Сравнивайте оба варианта рядом.' : q.detail) + '</small></button>';
+        (alreadyCreated ? 'Новый план уже добавлен' : q.text) + '<small>' + (alreadyCreated ? 'Сравните все планы на странице.' : q.detail) + '</small></button>';
     }
-    return '<article class="plan' + (selected ? ' is-selected' : '') + statusClass + '" data-plan-id="' + plan.id + '" aria-labelledby="title-' + plan.id + '">' +
+    return '<article class="plan' + (selected ? ' is-selected' : '') + statusClass + '" data-plan-id="' + plan.id + '" tabindex="-1" aria-labelledby="title-' + plan.id + '">' +
       '<div class="plan-top"><div><p class="plan-kicker">План ' + plan.letter + '</p><h2 id="title-' + plan.id + '">' + plan.title + '</h2></div>' + (selected ? '<span class="selected-mark">ВЫБРАН</span>' : '') + '</div>' +
       '<section class="conditions" aria-label="Условия плана"><h3>Условия</h3><dl>' +
-      '<div><dt>Есть в запасе</dt><dd data-field="stock">' + plan.stock + ' шт.</dd></div>' +
-      '<div><dt>Гостей</dt><dd data-field="guests">' + plan.guests + '</dd></div>' +
-      '<div><dt>Не меньше на гостя</dt><dd data-field="minimum">' + plan.minimum + ' шт.</dd></div>' +
-      '<div><dt>В пачке</dt><dd data-field="pack">' + plan.pack + ' шт.</dd></div>' +
+      '<div><dt>Печенья уже дома</dt><dd data-field="stock">' + cookies(plan.stock) + '</dd></div>' +
+      '<div><dt>Ждёте гостей</dt><dd data-field="guests">' + plan.guests + '</dd></div>' +
+      '<div><dt>Не меньше печений на гостя</dt><dd data-field="minimum">' + cookies(plan.minimum) + '</dd></div>' +
+      '<div><dt>Печений в пачке</dt><dd data-field="pack">' + cookies(plan.pack) + '</dd></div>' +
       '</dl></section>' +
-      '<section class="answer" aria-label="Результат плана"><h3>Что сделать и что получится</h3>' +
-      '<p class="action-line">Купить <b data-result="packs">' + result.packsToBuy + '</b> ' + pluralPacks(result.packsToBuy) + '.</p>' +
-      '<div class="result-grid"><div class="result"><span>Всего будет</span><b data-result="total">' + result.total + ' шт.</b></div><div class="result"><span>Каждому</span><b data-result="each">' + result.each + ' шт.</b></div><div class="result"><span>Останется</span><b data-result="remainder">' + result.remainder + ' шт.</b></div></div>' +
+      '<section class="answer" aria-label="Результат плана"><h3>Что купить и что получится</h3>' +
+      '<p class="action-line">Купить <b data-result="packs">' + result.packsToBuy + '</b> ' + packWord(result.packsToBuy) + ' печенья.</p>' +
+      '<div class="result-grid"><div class="result"><span>Всего печенья</span><b data-result="total">' + cookies(result.total) + '</b></div><div class="result"><span>Каждому гостю</span><b data-result="each">' + cookies(result.each) + '</b></div><div class="result"><span>Останется в запасе</span><b data-result="remainder">' + cookies(result.remainder) + '</b></div></div>' +
       floorMessage(result, plan) + '</section>' +
       '<div class="plan-actions"><button class="select-plan" type="button" data-select="' + plan.id + '" aria-pressed="' + selected + '">' + selectLabel + '</button>' + question + '</div></article>';
   }
-  function pluralPacks(n) { return n === 1 ? 'пачку' : (n >= 2 && n <= 4 ? 'пачки' : 'пачек'); }
-  function render() {
+
+  // Keyboard focus must not fall back to <body> when a card is rebuilt. A plan that was chosen keeps
+  // the focus on its own button (which now reads "Этот план выбран"); a plan that was just added takes
+  // the focus itself, so the reader announces the new card before anything else.
+  function applyFocus(request) {
+    if (!request) return;
+    const card = document.querySelector('[data-plan-id="' + request.id + '"]');
+    if (!card) return;
+    const target = request.type === 'select' ? card.querySelector('[data-select]') : card;
+    if (target && typeof target.focus === 'function') target.focus();
+  }
+
+  function render(focusRequest) {
     document.getElementById('plans').innerHTML = plans.map(cardHtml).join('');
     document.getElementById('plan-count').textContent = String(plans.length);
+    applyFocus(focusRequest);
   }
+
   document.getElementById('plans').addEventListener('click', event => {
     const select = event.target.closest('[data-select]');
     const branch = event.target.closest('[data-branch]');
-    if (select) { selectedId = select.dataset.select; render(); }
+    if (select) { selectedId = select.dataset.select; render({ type: 'select', id: selectedId }); return; }
     if (branch && !branch.disabled) cloneForQuestion(branch.dataset.branch);
   });
   render();
@@ -187,22 +216,28 @@
   function runBrowserCheck() {
     const out = document.getElementById('test-output'); out.hidden = false;
     const lines = []; const assert = (condition, label) => { if (!condition) throw new Error('FAIL: ' + label); lines.push('PASS: ' + label); };
-    const row = id => { const el = document.querySelector('[data-plan-id="' + id + '"]'); const val = name => el.querySelector('[data-result="' + name + '"]').textContent.trim(); return { el, packs: val('packs'), total: val('total'), each: val('each'), remainder: val('remainder') }; };
+    const digitsOf = value => String(value).replace(/[^0-9]/g, '');
+    const row = id => { const el = document.querySelector('[data-plan-id="' + id + '"]'); const val = name => digitsOf(el.querySelector('[data-result="' + name + '"]').textContent); return { el, packs: val('packs'), total: val('total'), each: val('each'), remainder: val('remainder') }; };
+    const focusedPlan = () => { const a = document.activeElement; return a && a.closest ? (a.closest('[data-plan-id]') || {}).dataset : null; };
     try {
       let a = row('a');
-      assert(a.packs === '1' && a.total === '20 шт.' && a.each === '6 шт.' && a.remainder === '2 шт.', 'A: 12/3/min6/pack8 → 1, 20, 6, 2');
+      assert(a.packs === '1' && a.total === '20' && a.each === '6' && a.remainder === '2', 'A: 12/3/min6/pack8 → 1, 20, 6, 2');
       document.querySelector('[data-plan-id="a"] [data-branch="a"]').click();
       a = row('a'); const b = row('b');
-      assert(a.packs === '1' && a.total === '20 шт.' && a.each === '6 шт.' && a.remainder === '2 шт.', 'negative: A unchanged after adding B');
-      assert(b.packs === '2' && b.total === '28 шт.' && b.each === '7 шт.' && b.remainder === '0 шт.', 'B: 12/4/min6/pack8 → 2, 28, 7, 0');
+      assert(a.packs === '1' && a.total === '20' && a.each === '6' && a.remainder === '2', 'negative: A unchanged after adding B');
+      assert(b.packs === '2' && b.total === '28' && b.each === '7' && b.remainder === '0', 'B: 12/4/min6/pack8 → 2, 28, 7, 0');
       assert(b.el.querySelector('[data-floor-status="above"]') !== null, 'B visibly says that 7 exceeds requested minimum 6');
+      const focusAfterAdd = focusedPlan();
+      assert(focusAfterAdd !== null && focusAfterAdd.planId === 'b', 'focus lands on the newly added plan, not on <body>');
       document.querySelector('[data-plan-id="b"] [data-branch="b"]').click();
       const c = row('c');
-      assert(c.packs === '3' && c.total === '24 шт.' && c.each === '6 шт.' && c.remainder === '0 шт.', 'C: 12/4/min6/pack4 → 3, 24, 6, 0');
+      assert(c.packs === '3' && c.total === '24' && c.each === '6' && c.remainder === '0', 'C: 12/4/min6/pack4 → 3, 24, 6, 0');
       document.querySelector('[data-plan-id="a"] [data-select="a"]').click();
       assert(document.querySelector('[data-plan-id="a"] .selected-mark') !== null, 'selecting A changes its selection mark');
+      const focusAfterSelect = focusedPlan();
+      assert(focusAfterSelect !== null && focusAfterSelect.planId === 'a' && document.activeElement.getAttribute('data-select') === 'a', 'focus stays on the button of the plan just chosen');
       const bb = row('b'), cc = row('c');
-      assert(bb.packs === '2' && bb.total === '28 шт.' && cc.packs === '3' && cc.total === '24 шт.', 'negative: selection preserves B and C results');
+      assert(bb.packs === '2' && bb.total === '28' && cc.packs === '3' && cc.total === '24', 'negative: selection preserves B and C results');
       const failing = { id: 'verify-fail', letter: 'Т', title: 'Проверка минимума', stock: 0, guests: 2, minimum: 5, pack: 4, packsOverride: 1 };
       plans = [...plans, failing]; render();
       assert(document.querySelector('[data-plan-id="verify-fail"] [data-floor-status="fail"]') !== null, 'negative: a failing minimum is visibly marked');
